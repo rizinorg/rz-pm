@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "libr2pm.h"
+#include "librzpm.h"
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -11,18 +11,18 @@ int main(int argc, char* argv[]) {
 
     int ret;
 
-    char* path = "r2pm_c-test-repo";
+    char* path = "rizin_pm_c-test-repo";
     char* command = argv[1];
 
     if (strcmp(command, "init") == 0) {
-        if ((ret = r2pm_init(path)) != 0) {
+        if ((ret = rizin_pm_init(path)) != 0) {
             perror("init");
             return ret;
         }
     } else if (strcmp(command, "list-available") == 0) {
-        struct r2pm_string_list* p;
+        struct rizin_pm_string_list* p;
 
-        if ((ret = r2pm_list_available(path, &p)) != 0) {
+        if ((ret = rizin_pm_list_available(path, &p)) != 0) {
             perror("list_available");
             return ret;
         }
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
         if (p == NULL) {
             fprintf(stderr, "p is null");
         } else {
-            struct r2pm_string_list* current = p;
+            struct rizin_pm_string_list* current = p;
 
             while(current != NULL) {
                 printf("%s\n", current->s);
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
             }
         }
     } else if (strcmp(command, "delete") == 0) {
-        if ((ret = r2pm_delete(path)) != 0) {
+        if ((ret = rizin_pm_delete(path)) != 0) {
             perror("delete");
             return ret;
         }

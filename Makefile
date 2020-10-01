@@ -4,9 +4,9 @@ else
     LIB_EXT := .so
 endif
 
-LIB := libr2pm${LIB_EXT}
+LIB := librzpm${LIB_EXT}
 
-all: r2pm r2pm_c ${LIB}
+all: rzpm rzpm_c ${LIB}
 
 .PHONY: tests integration-tests
 
@@ -16,14 +16,14 @@ integration-tests:
 tests:
 	go test ./...
 
-r2pm: $(wildcard internal/**/*.go pkg/**/*.go main.go)
+rzpm: $(wildcard internal/**/*.go pkg/**/*.go main.go)
 	go build
 
 ${LIB}: $(wildcard internal/**/*.go lib/*.go pkg/**/*.go)
 	go build -o $@ -buildmode=c-shared ./lib
 
-r2pm_c: c/r2pm.c ${LIB}
-	${CC} -Wall -o $@ -I. -L. $< -lr2pm
+rzpm_c: c/rzpm.c ${LIB}
+	${CC} -Wall -o $@ -I. -L. $< -lrzpm
 
 clean:
-	rm -f ${LIB} libr2pm.h r2pm r2pm_c
+	rm -f ${LIB} librzpm.h rzpm rzpm_c
