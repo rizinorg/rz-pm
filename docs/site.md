@@ -1,8 +1,8 @@
 # Site
 
-The `r2pm` *site* is a directory that is only managed by the software.
-The user should never touch its contents manually.  
-The site is initialized using the `r2pm init` command.
+The `rz-pm` *site* is a directory that is only managed by the software.
+The user should never touch its contents manually.
+The site is initialized using the `rz-pm init` command.
 
 
 ## Location
@@ -10,22 +10,22 @@ The site is initialized using the `r2pm init` command.
 For each supported operating system, by order of preference:
 
 - Linux:
-  - `${XDG_DATA_HOME}/RadareOrg/r2pm` if `$XDG_DATA_HOME` is defined;
-  - `${HOME}/.local/share/RadareOrg/r2pm` otherwise
-- BSD (including macOS): `${HOME}/Library/RadareOrg/r2pm`
+  - `${XDG_DATA_HOME}/RizinOrg/rz-pm` if `$XDG_DATA_HOME` is defined;
+  - `${HOME}/.local/share/RizinOrg/rz-pm` otherwise
+- BSD (including macOS): `${HOME}/Library/RizinOrg/rz-pm`
 - Windows
-  - `${APPDATA}/RadareOrg/r2pm` if `$APPDATA` is defined
-  - `${HOMEPATH}/RadareOrg/r2pm` otherwise
+  - `${APPDATA}/RizinOrg/rz-pm` if `$APPDATA` is defined
+  - `${HOMEPATH}/RizinOrg/rz-pm` otherwise
 
 ## Contents
 
 ```
-$R2PM_SITE
+$RZPM_SITE
 ├── installed/
 │   └── pkg1.yaml
 │   └── pkg2.yaml
 │   └── pkg-from-cli.yaml
-├── r2pm-db/
+├── rz-pm-db/
     └── db/
         └── pkg1.yaml
         └── pkg2.yaml

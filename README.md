@@ -1,22 +1,19 @@
-# r2pm: radare2 package manager
+# rz-pm: rizin package manager
 
 This tool is a cross platform package manager for the reverse engineering
-framework radare2.
+framework [rizin](https://github.com/rizinorg/rizin).
 
-It is a rewrite in Go of the [original Shell r2pm script](https://github.com/radareorg/radare2/blob/master/binr/r2pm/r2pm).
+It is a rewrite in Go of the [original Shell rz-pm script](https://github.com/rizinorg/rizin/blob/master/binrz/rz-pm/rz-pm).
 
 This tool is still a work in progress.
 
 | CI | Badges/URL |
 |----------|---------------------------------------------------------------------|
-| **GithubCI**  | [![Tests Status](https://github.com/radareorg/r2pm/workflows/Go/badge.svg)](https://github.com/radareorg/r2pm/actions?query=workflow%3AGo)|
-| **TravisCI** | [![Build Status](https://travis-ci.org/radareorg/r2pm.svg?branch=master)](https://travis-ci.org/radareorg/r2pm)|
-| **Dependabot** |[![Dependabot Enablement](https://api.dependabot.com/badges/status?host=github&repo=radareorg/r2pm)](https://github.com/radareorg/r2pm/pulls?q=is%3Aopen+is%3Apr+label%3Adependencies)|
-| **Sourcehut** | [![builds.sr.ht status](https://builds.sr.ht/~xvilka/r2pm.svg)](https://builds.sr.ht/~xvilka/r2pm?)|
+| **GithubCI**  | [![Tests Status](https://github.com/rizinorg/rzpm/workflows/Go/badge.svg)](https://github.com/rizinorg/rzpm/actions?query=workflow%3AGo)|
 
 ## Package example
 
-The official database is available [here](https://github.com/radareorg/r2pm-db).
+The official database is available [here](https://github.com/rizinorg/rzpm-db).
 
 ```yaml
 name: r2dec

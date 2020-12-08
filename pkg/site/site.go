@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/radareorg/r2pm/pkg"
-	"github.com/radareorg/r2pm/pkg/database"
-	"github.com/radareorg/r2pm/pkg/r2package"
+	"github.com/rizinorg/rzpm/pkg"
+	"github.com/rizinorg/rzpm/pkg/database"
+	"github.com/rizinorg/rzpm/pkg/rzpackage"
 )
 
 type Site struct {
@@ -48,13 +48,13 @@ func (s Site) InstallPackage(name string) error {
 	return s.installFromInfoFile(ifile)
 }
 
-func (s Site) InstalledPackage(name string) (r2package.InfoFile, error) {
+func (s Site) InstalledPackage(name string) (rzpackage.InfoFile, error) {
 	path := filepath.Join(s.installedSubDir(), name)
-	return r2package.FromFile(path)
+	return rzpackage.FromFile(path)
 }
 
 func (s Site) InstallPackageFromFile(path string) error {
-	ifile, err := r2package.FromFile(path)
+	ifile, err := rzpackage.FromFile(path)
 	if err != nil {
 		return fmt.Errorf("could not read %s as a package info file: %w", path, err)
 	}
@@ -83,15 +83,15 @@ func (s Site) UninstallPackage(name string) error {
 	return os.Remove(ifile.Path)
 }
 
-func (s Site) ListInstalledPackages() ([]r2package.Info, error) {
+func (s Site) ListInstalledPackages() ([]rzpackage.Info, error) {
 	dir := s.installedSubDir()
 
-	ifiles, err := r2package.ReadDir(dir)
+	ifiles, err := rzpackage.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("could not read %s: %w", dir, err)
 	}
 
-	packages := make([]r2package.Info, 0, len(ifiles))
+	packages := make([]rzpackage.Info, 0, len(ifiles))
 
 	for _, p := range ifiles {
 		packages = append(packages, p.Info)
@@ -135,7 +135,7 @@ func (s Site) Upgrade(name string) error {
 //
 
 func (s Site) databaseSubDir() string {
-	return filepath.Join(s.path, "r2pm-db")
+	return filepath.Join(s.path, "rz-pm-db")
 }
 
 func (s Site) getPackageSubDir(pkgType string) (string, error) {
@@ -151,7 +151,7 @@ func (s Site) gitSubDir() string {
 	return filepath.Join(s.path, "git")
 }
 
-func (s Site) installFromInfoFile(ifile r2package.InfoFile) error {
+func (s Site) installFromInfoFile(ifile rzpackage.InfoFile) error {
 	dir, err := s.getPackageSubDir(ifile.Type)
 	if err != nil {
 		return fmt.Errorf("could not determine where to install %s: %w", ifile.Name, err)

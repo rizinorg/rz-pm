@@ -1,9 +1,9 @@
 name: test
 type: git
-repo: https://github.com/radareorg/r2pm
-desc: Test package for r2pm
+repo: https://github.com/rizinorg/rzpm
+desc: Test package for rz-pm
 
-install: 
+install:
   - true
 
 uninstall:

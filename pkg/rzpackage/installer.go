@@ -1,4 +1,4 @@
-package r2package
+package rzpackage
 
 import (
 	"context"
@@ -26,25 +26,25 @@ type fileManager interface {
 
 type Installer struct {
 	cmdExecutor  executor
-	dirs         R2Dirs
+	dirs         RzDirs
 	fileManager  fileManager
 	getFetcher   func(Source) (fetcher, error)
 	logger       *log.Logger
 	tmpDirGetter func(string, string) (string, error)
 }
 
-type R2Dirs struct {
-	// Headers is the directory where r2 headers are located
+type RzDirs struct {
+	// Headers is the directory where rizin headers are located
 	Headers string
 
-	// Libs is the directory where r2 libraries are located
+	// Libs is the directory where rizin libraries are located
 	Libs string
 
 	// Plugins is the destination directory for plugins
 	Plugins string
 }
 
-func NewInstaller(m Manifest, logger *log.Logger, dirs R2Dirs) *Installer {
+func NewInstaller(m Manifest, logger *log.Logger, dirs RzDirs) *Installer {
 	return &Installer{
 		cmdExecutor:  &commandExecutor{},
 		dirs:         dirs,
@@ -72,7 +72,7 @@ func (i *Installer) Install(ctx context.Context, m Manifest) error {
 		return fmt.Errorf("invalid source: %v", err)
 	}
 
-	tmpDir, err := i.tmpDirGetter("", "r2pm-*")
+	tmpDir, err := i.tmpDirGetter("", "rz-pm-*")
 	if err != nil {
 		return fmt.Errorf("could not create a temporary directory: %v", err)
 	}

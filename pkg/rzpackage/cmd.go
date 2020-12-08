@@ -1,4 +1,4 @@
-package r2package
+package rzpackage
 
 import "os/exec"
 

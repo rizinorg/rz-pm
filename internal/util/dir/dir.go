@@ -6,12 +6,12 @@ import (
 )
 
 const (
-	orgSubDir     = "RadareOrg"
-	SiteDirEnvVar = "R2PM_SITEDIR"
+	orgSubDir     = "RizinOrg"
+	SiteDirEnvVar = "RZPM_SITEDIR"
 )
 
-func R2Dir() string {
-	return filepath.Join(orgSubdDir(), "radare2")
+func RzDir() string {
+	return filepath.Join(orgSubdDir(), "rizin")
 }
 
 func SiteDir() string {
@@ -19,7 +19,7 @@ func SiteDir() string {
 		return envVar
 	}
 
-	return filepath.Join(orgSubdDir(), "r2pm")
+	return filepath.Join(orgSubdDir(), "rz-pm")
 }
 
 func orgSubdDir() string {

@@ -8,9 +8,9 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/radareorg/r2pm/internal/features"
-	"github.com/radareorg/r2pm/internal/util/dir"
-	"github.com/radareorg/r2pm/pkg/r2package"
+	"github.com/rizinorg/rzpm/internal/features"
+	"github.com/rizinorg/rzpm/internal/util/dir"
+	"github.com/rizinorg/rzpm/pkg/rzpackage"
 )
 
 func getArgumentOrExit(c *cli.Context) string {
@@ -28,11 +28,11 @@ func getArgumentOrExit(c *cli.Context) string {
 }
 
 func main() {
-	r2Dir := dir.R2Dir()
-	r2pmDir := dir.SiteDir()
+	rzDir := dir.RzDir()
+	rzpmDir := dir.SiteDir()
 
 	listAvailablePackages := func(c *cli.Context) error {
-		packages, err := features.ListAvailable(r2pmDir)
+		packages, err := features.ListAvailable(rzpmDir)
 		if err != nil {
 			return err
 		}
@@ -46,8 +46,8 @@ func main() {
 	const flagNameDebug = "debug"
 
 	app := cli.NewApp()
-	app.Name = "r2pm"
-	app.Usage = "r2 package manager"
+	app.Name = "rz-pm"
+	app.Usage = "rizin package manager"
 	app.Version = "0.0.1"
 
 	app.Flags = []cli.Flag{
@@ -68,7 +68,7 @@ func main() {
 			Name:  "delete",
 			Usage: "delete the local package database",
 			Action: func(*cli.Context) error {
-				return features.Delete(r2pmDir)
+				return features.Delete(rzpmDir)
 			},
 		},
 		{
@@ -76,7 +76,7 @@ func main() {
 			Aliases: []string{"update"},
 			Usage:   "initialize or update the local package database",
 			Action: func(*cli.Context) error {
-				return features.Init(r2pmDir)
+				return features.Init(rzpmDir)
 			},
 		},
 		{
@@ -92,23 +92,23 @@ func main() {
 			Action: func(c *cli.Context) error {
 				if path := c.String("f"); path != "" {
 					log.Print("Installing " + path)
-					return features.InstallFromFile(r2pmDir, path)
+					return features.InstallFromFile(rzpmDir, path)
 				}
 
 				packageName := getArgumentOrExit(c)
 
-				return features.Install(r2pmDir, packageName)
+				return features.Install(rzpmDir, packageName)
 			},
 			Subcommands: []*cli.Command{
 				{
-					Name:      "radare2",
-					Usage:     "install radare2",
+					Name:      "rizin",
+					Usage:     "install rizin",
 					ArgsUsage: "VERSION",
 					Flags: []cli.Flag{
 						&cli.StringFlag{
 							Name:  "p",
-							Usage: "radare2's configure --prefix",
-							Value: r2Dir,
+							Usage: "rizin's configure --prefix",
+							Value: rzDir,
 						},
 					},
 					Action: func(c *cli.Context) error {
@@ -123,7 +123,7 @@ func main() {
 							return errors.New("A prefix is required")
 						}
 
-						return features.InstallRadare2(r2pmDir, r2Dir, version)
+						return features.InstallRizin(rzpmDir, rzDir, version)
 					},
 				},
 			},
@@ -143,7 +143,7 @@ func main() {
 					Name:  "installed",
 					Usage: "list all the installed packages",
 					Action: func(c *cli.Context) error {
-						packages, err := features.ListInstalled(r2pmDir)
+						packages, err := features.ListInstalled(rzpmDir)
 						if err != nil {
 							return err
 						}
@@ -163,7 +163,7 @@ func main() {
 			Action: func(c *cli.Context) error {
 				pattern := getArgumentOrExit(c)
 
-				matches, err := features.Search(r2pmDir, pattern)
+				matches, err := features.Search(rzpmDir, pattern)
 				if err != nil {
 					return err
 				}
@@ -181,14 +181,14 @@ func main() {
 			Action: func(c *cli.Context) error {
 				packageName := getArgumentOrExit(c)
 
-				return features.Uninstall(r2pmDir, packageName)
+				return features.Uninstall(rzpmDir, packageName)
 			},
 			Subcommands: []*cli.Command{
 				{
-					Name:  "radare2",
-					Usage: "uninstall radare2",
+					Name:  "rizin",
+					Usage: "uninstall rizin",
 					Action: func(c *cli.Context) error {
-						return features.UninstallRadare2(r2pmDir, r2Dir)
+						return features.UninstallRizin(rzpmDir, rzDir)
 					},
 				},
 			},
@@ -205,12 +205,12 @@ func main() {
 			},
 			Action: func(c *cli.Context) error {
 				if c.Bool("a") {
-					return features.UpgradeAll(r2pmDir)
+					return features.UpgradeAll(rzpmDir)
 				}
 
 				packageName := getArgumentOrExit(c)
 
-				return features.Upgrade(r2pmDir, packageName)
+				return features.Upgrade(rzpmDir, packageName)
 			},
 		},
 	}
@@ -221,7 +221,7 @@ func main() {
 	}
 }
 
-func printPackageSlice(packages []r2package.Info) {
+func printPackageSlice(packages []rzpackage.Info) {
 	for _, p := range packages {
 		fmt.Printf("%s: %s\n", p.Name, p.Desc)
 	}

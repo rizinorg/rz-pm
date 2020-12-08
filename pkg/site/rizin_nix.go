@@ -11,12 +11,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/radareorg/r2pm/pkg/git"
-	"github.com/radareorg/r2pm/pkg/process"
+	"github.com/rizinorg/rzpm/pkg/git"
+	"github.com/rizinorg/rzpm/pkg/process"
 )
 
-func (s Site) InstallRadare2(prefix, version string) error {
-	srcDir := filepath.Join(s.gitSubDir(), "radare2")
+func (s Site) InstallRizin(prefix, version string) error {
+	srcDir := filepath.Join(s.gitSubDir(), "rizin")
 
 	if err := os.MkdirAll(srcDir, 0755); err != nil {
 		return fmt.Errorf(
@@ -36,7 +36,7 @@ func (s Site) InstallRadare2(prefix, version string) error {
 			return fmt.Errorf("could not run git init: %v", err)
 		}
 
-		origin := "https://github.com/radareorg/radare2"
+		origin := "https://github.com/rizinorg/rizin"
 
 		log.Print("Setting the origin to " + origin)
 		if err = repo.AddRemote("origin", origin); err != nil {

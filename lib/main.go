@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/radareorg/r2pm/internal/features"
+	"github.com/rizinorg/rzpm/internal/features"
 )
 
 /*
@@ -24,7 +24,7 @@ const (
 )
 
 func init() {
-	log.SetPrefix("libr2pm: ")
+	log.SetPrefix("librz-pm: ")
 
 	// Enable the logger if the environment variable is a valid boolean
 	env := os.Getenv(features.DebugEnvVar)
@@ -45,26 +45,26 @@ func getReturnValue(err error) C.int {
 }
 
 //export rizin_pm_delete
-func rizin_pm_delete(r2pmDir *C.char) C.int {
-	err := features.Delete(C.GoString(r2pmDir))
+func rizin_pm_delete(rzpmDir *C.char) C.int {
+	err := features.Delete(C.GoString(rzpmDir))
 	return getReturnValue(err)
 }
 
 //export rizin_pm_init
-func rizin_pm_init(r2pmDir *C.char) C.int {
-	err := features.Init(C.GoString(r2pmDir))
+func rizin_pm_init(rzpmDir *C.char) C.int {
+	err := features.Init(C.GoString(rzpmDir))
 	return getReturnValue(err)
 }
 
 //export rizin_pm_install
-func rizin_pm_install(r2pmDir, packageName *C.char) C.int {
-	err := features.Install(C.GoString(r2pmDir), C.GoString(packageName))
+func rizin_pm_install(rzpmDir, packageName *C.char) C.int {
+	err := features.Install(C.GoString(rzpmDir), C.GoString(packageName))
 	return getReturnValue(err)
 }
 
 //export rizin_pm_list_available
-func rizin_pm_list_available(r2pmDir *C.char, list **C.struct_rizin_pm_string_list) C.int {
-	entries, err := features.ListAvailable(C.GoString(r2pmDir))
+func rizin_pm_list_available(rzpmDir *C.char, list **C.struct_rizin_pm_string_list) C.int {
+	entries, err := features.ListAvailable(C.GoString(rzpmDir))
 	if err != nil {
 		return Error
 	}
@@ -97,8 +97,8 @@ func rizin_pm_list_available(r2pmDir *C.char, list **C.struct_rizin_pm_string_li
 }
 
 //export rizin_pm_list_installed
-func rizin_pm_list_installed(r2pmDir *C.char) (*C.struct_test, C.int) {
-	entries, err := features.ListInstalled(C.GoString(r2pmDir))
+func rizin_pm_list_installed(rzpmDir *C.char) (*C.struct_test, C.int) {
+	entries, err := features.ListInstalled(C.GoString(rzpmDir))
 
 	// TODO do not return nil
 	_ = entries
@@ -107,8 +107,8 @@ func rizin_pm_list_installed(r2pmDir *C.char) (*C.struct_test, C.int) {
 }
 
 //export rizin_pm_uninstall
-func rizin_pm_uninstall(r2pmDir, packageName *C.char) C.int {
-	err := features.Uninstall(C.GoString(r2pmDir), C.GoString(packageName))
+func rizin_pm_uninstall(rzpmDir, packageName *C.char) C.int {
+	err := features.Uninstall(C.GoString(rzpmDir), C.GoString(packageName))
 	return getReturnValue(err)
 }
 

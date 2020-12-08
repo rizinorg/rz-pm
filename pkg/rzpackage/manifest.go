@@ -1,4 +1,4 @@
-package r2package
+package rzpackage
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/radareorg/r2pm/pkg/r2package/fetchers"
+	"github.com/rizinorg/rzpm/pkg/rzpackage/fetchers"
 )
 
 type ManagedFile struct {

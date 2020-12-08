@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestRadare2(t *testing.T) {
+func TestRizin(t *testing.T) {
 	siteDir, err := ioutil.TempDir("", "")
 	if err != nil {
 		t.Fatal(err)
@@ -28,32 +28,32 @@ func TestRadare2(t *testing.T) {
 	}
 	defer os.RemoveAll(prefix)
 
-	t.Run("InstallRadare2", func(t *testing.T) {
-		version := os.Getenv("R2_VERSION")
+	t.Run("InstallRizin", func(t *testing.T) {
+		version := os.Getenv("RZ_VERSION")
 
 		if version == "" {
-			t.Fatal("The r2 version must be defined")
+			t.Fatal("The rizin version must be defined")
 		}
 
-		if err := s.InstallRadare2(prefix, version); err != nil {
+		if err := s.InstallRizin(prefix, version); err != nil {
 			t.Fatal(err)
 		}
 
-		r2Bin := "r2"
+		rzBin := "rizin"
 
 		if runtime.GOOS == "windows" {
-			r2Bin = "r2.bat"
+			rzBin = "rizin.bat"
 		}
 
-		r2Path := filepath.Join(prefix, "bin", r2Bin)
+		rzPath := filepath.Join(prefix, "bin", rzBin)
 
-		if _, err := os.Stat(r2Path); err != nil {
-			t.Fatalf("Could not stat(%q)", r2Path)
+		if _, err := os.Stat(rzPath); err != nil {
+			t.Fatalf("Could not stat(%q)", rzPath)
 		}
 	})
 
-	t.Run("UninstallRadare2", func(t *testing.T) {
-		if err := s.UninstallRadare2(prefix); err != nil {
+	t.Run("UninstallRizin", func(t *testing.T) {
+		if err := s.UninstallRizin(prefix); err != nil {
 			t.Fatal(err)
 		}
 	})

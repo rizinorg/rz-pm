@@ -1,7 +1,7 @@
 # Packages
 
-Packages are additions to the `r2` software.  
-A package can consist in a set of source files that have to be built against the current `r2` installation, or in pre-built binaries.
+Packages are additions to the `rizin` software.
+A package can consist in a set of source files that have to be built against the current `rizin` installation, or in pre-built binaries.
 
 ## Plugin file
 
@@ -14,7 +14,7 @@ A plugin file is a text file in the YAML format that contains various metadata a
 ---
 name: my-package  # must be unique and equals to the file name
 version: 1.2.3
-description: Some description   
+description: Some description
 
 install:
 
@@ -48,7 +48,7 @@ install:
       repo: git@github.com:username/project.git
       ref: master  # or a tag
     commands:
-      - gcc -o exe1 exe1.c -I{{ .R2HeadersPath }} -L{{ .R2LibsPath }}
+      - gcc -o exe1 exe1.c -I{{ .RzHeadersPath }} -L{{ .RzLibsPath }}
     out:
       - path: exe1
         type: exe
@@ -56,10 +56,10 @@ install:
 
 ### Template variables
 
-To accomodate those plugins that need to compile against `r2` libraries, `r2pm` will replace the following variables with their value in the commands:
+To accomodate those plugins that need to compile against `rizin` libraries, `rz-pm` will replace the following variables with their value in the commands:
 
 |Name|Description|
 |----|-----------|
 |`DestPath`|The destination directory for plugins|
-|`R2HeadersPath`|The directory where `r2` headers are located|
-|`R2LibsPath`|The directory where `r2` libraries are located|
+|`RzHeadersPath`|The directory where `rizin` headers are located|
+|`RzLibsPath`|The directory where `rizin` libraries are located|

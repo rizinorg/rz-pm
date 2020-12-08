@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/radareorg/r2pm/pkg/process"
+	"github.com/rizinorg/rzpm/pkg/process"
 )
 
 const gitBin = "git"

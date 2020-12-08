@@ -12,10 +12,10 @@ import (
 	"strings"
 )
 
-func (s Site) InstallRadare2(prefix, version string) error {
-	url := fmt.Sprintf("http://radare.mikelloc.com/get/%s/radare2-msvc_64-%s.zip", version, version)
+func (s Site) InstallRizin(prefix, version string) error {
+	url := fmt.Sprintf("http://radare.mikelloc.com/get/%s/rizin-msvc_64-%s.zip", version, version)
 
-	fd, err := ioutil.TempFile("", "r2pm_*.zip")
+	fd, err := ioutil.TempFile("", "rz-pm_*.zip")
 	if err != nil {
 		return fmt.Errorf("could not create a temporary file: %v", err)
 	}

@@ -1,4 +1,4 @@
-package r2package
+package rzpackage
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/radareorg/r2pm/pkg/git"
+	"github.com/rizinorg/rzpm/pkg/git"
 )
 
 type gitInstaller struct {

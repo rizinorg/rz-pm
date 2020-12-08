@@ -1,6 +1,6 @@
-//go:generate go run github.com/golang/mock/mockgen -package r2package -source installer.go -destination installer_mock_test.go executor,fetcher,fileManager
+//go:generate go run github.com/golang/mock/mockgen -package rzpackage -source installer.go -destination installer_mock_test.go executor,fetcher,fileManager
 
-package r2package
+package rzpackage
 
 import (
 	"context"
@@ -39,7 +39,7 @@ func TestInstaller_Install(t *testing.T) {
 
 	i := &Installer{
 		cmdExecutor:  e,
-		dirs:         R2Dirs{Plugins: dirPlugins},
+		dirs:         RzDirs{Plugins: dirPlugins},
 		fileManager:  fm,
 		getFetcher:   getFetcher,
 		logger:       log.New(ioutil.Discard, "", 0), // TODO: figure out how to mock this

@@ -5,14 +5,14 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/radareorg/r2pm/testdata"
+	"github.com/rizinorg/rzpm/testdata"
 )
 
 func TestNew(t *testing.T) {
 	tempDir := testdata.TempDirOrFail(t)
 	defer os.RemoveAll(tempDir)
 
-	siteDir := filepath.Join(tempDir, "r2pm")
+	siteDir := filepath.Join(tempDir, "rz-pm")
 
 	s, err := New(siteDir)
 	if err != nil {

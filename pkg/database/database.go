@@ -6,13 +6,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/radareorg/r2pm/pkg/git"
-	"github.com/radareorg/r2pm/pkg/r2package"
+	"github.com/rizinorg/rzpm/pkg/git"
+	"github.com/rizinorg/rzpm/pkg/rzpackage"
 )
 
 const (
 	dbSubdir = "db"
-	repoName = "r2pm-db"
+	repoName = "rz-pm-db"
 )
 
 type Database struct {
@@ -27,7 +27,7 @@ func (d Database) InitOrUpdate() error {
 	const (
 		remoteName   = "origin"
 		remoteBranch = "master"
-		url          = "https://github.com/radareorg/" + repoName
+		url          = "https://github.com/rizinorg/" + repoName
 	)
 
 	log.Print("Opening " + d.path)
@@ -63,22 +63,22 @@ func (d Database) Delete() error {
 	return os.RemoveAll(d.path)
 }
 
-func (d Database) GetInfoFile(packageName string) (r2package.InfoFile, error) {
+func (d Database) GetInfoFile(packageName string) (rzpackage.InfoFile, error) {
 	path := filepath.Join(d.path, dbSubdir, packageName)
 
-	return r2package.FromFile(path)
+	return rzpackage.FromFile(path)
 }
 
 // ListAvailablePackages returns a slice of strings containing the names of all the available packages.
-func (d Database) ListAvailablePackages() ([]r2package.Info, error) {
+func (d Database) ListAvailablePackages() ([]rzpackage.Info, error) {
 	dir := filepath.Join(d.path, dbSubdir)
 
-	ifiles, err := r2package.ReadDir(dir)
+	ifiles, err := rzpackage.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("could not read %s: %w", dir, err)
 	}
 
-	packages := make([]r2package.Info, 0, len(ifiles))
+	packages := make([]rzpackage.Info, 0, len(ifiles))
 
 	for _, p := range ifiles {
 		packages = append(packages, p.Info)

@@ -10,18 +10,18 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/radareorg/r2pm/pkg/r2package"
-	"github.com/radareorg/r2pm/pkg/site"
+	"github.com/rizinorg/rzpm/pkg/rzpackage"
+	"github.com/rizinorg/rzpm/pkg/site"
 )
 
 const (
-	DebugEnvVar = "R2PM_DEBUG"
+	DebugEnvVar = "RZPM_DEBUG"
 
 	msgCannotInitialize = "could not initialize: %w"
 )
 
-func Delete(r2pmDir string) error {
-	s, err := site.New(r2pmDir)
+func Delete(rzpmDir string) error {
+	s, err := site.New(rzpmDir)
 	if err != nil {
 		return fmt.Errorf(msgCannotInitialize, err)
 	}
@@ -29,8 +29,8 @@ func Delete(r2pmDir string) error {
 	return s.Remove()
 }
 
-func Init(r2pmDir string) error {
-	s, err := site.New(r2pmDir)
+func Init(rzpmDir string) error {
+	s, err := site.New(rzpmDir)
 	if err != nil {
 		return fmt.Errorf("could not initialize: %w", err)
 	}
@@ -38,8 +38,8 @@ func Init(r2pmDir string) error {
 	return s.Database().InitOrUpdate()
 }
 
-func Install(r2pmDir, packageName string) error {
-	s, err := site.New(r2pmDir)
+func Install(rzpmDir, packageName string) error {
+	s, err := site.New(rzpmDir)
 	if err != nil {
 		return fmt.Errorf(msgCannotInitialize, err)
 	}
@@ -47,8 +47,8 @@ func Install(r2pmDir, packageName string) error {
 	return s.InstallPackage(packageName)
 }
 
-func InstallFromFile(r2pmDir, path string) error {
-	s, err := site.New(r2pmDir)
+func InstallFromFile(rzpmDir, path string) error {
+	s, err := site.New(rzpmDir)
 	if err != nil {
 		return fmt.Errorf(msgCannotInitialize, err)
 	}
@@ -56,26 +56,26 @@ func InstallFromFile(r2pmDir, path string) error {
 	return s.InstallPackageFromFile(path)
 }
 
-func InstallRadare2(r2pmDir, r2Dir, version string) error {
-	s, err := site.New(r2pmDir)
+func InstallRizin(rzpmDir, rzDir, version string) error {
+	s, err := site.New(rzpmDir)
 	if err != nil {
 		return err
 	}
 
-	return s.InstallRadare2(r2Dir, version)
+	return s.InstallRizin(rzDir, version)
 }
 
-func UninstallRadare2(r2pmDir, r2Dir string) error {
-	s, err := site.New(r2pmDir)
+func UninstallRizin(rzpmDir, rzDir string) error {
+	s, err := site.New(rzpmDir)
 	if err != nil {
 		return err
 	}
 
-	return s.UninstallRadare2(r2Dir)
+	return s.UninstallRizin(rzDir)
 }
 
-func ListAvailable(r2pmDir string) ([]r2package.Info, error) {
-	s, err := site.New(r2pmDir)
+func ListAvailable(rzpmDir string) ([]rzpackage.Info, error) {
+	s, err := site.New(rzpmDir)
 	if err != nil {
 		return nil, fmt.Errorf(msgCannotInitialize, err)
 	}
@@ -83,8 +83,8 @@ func ListAvailable(r2pmDir string) ([]r2package.Info, error) {
 	return s.Database().ListAvailablePackages()
 }
 
-func ListInstalled(r2pmDir string) ([]r2package.Info, error) {
-	s, err := site.New(r2pmDir)
+func ListInstalled(rzpmDir string) ([]rzpackage.Info, error) {
+	s, err := site.New(rzpmDir)
 	if err != nil {
 		return nil, fmt.Errorf(msgCannotInitialize, err)
 	}
@@ -92,18 +92,18 @@ func ListInstalled(r2pmDir string) ([]r2package.Info, error) {
 	return s.ListInstalledPackages()
 }
 
-func Search(r2pmDir, pattern string) ([]r2package.Info, error) {
+func Search(rzpmDir, pattern string) ([]rzpackage.Info, error) {
 	re, err := regexp.Compile(pattern)
 	if err != nil {
 		return nil, fmt.Errorf("%q is not a valid regex: %w", pattern, err)
 	}
 
-	packages, err := ListAvailable(r2pmDir)
+	packages, err := ListAvailable(rzpmDir)
 	if err != nil {
 		return nil, fmt.Errorf("could not get the list of packages: %w", err)
 	}
 
-	matches := make([]r2package.Info, 0, len(packages))
+	matches := make([]rzpackage.Info, 0, len(packages))
 
 	for _, p := range packages {
 		if re.Match([]byte(p.Name)) {
@@ -122,8 +122,8 @@ func SetDebug(value bool) {
 	}
 }
 
-func Uninstall(r2pmDir, packageName string) error {
-	s, err := site.New(r2pmDir)
+func Uninstall(rzpmDir, packageName string) error {
+	s, err := site.New(rzpmDir)
 	if err != nil {
 		return fmt.Errorf(msgCannotInitialize, err)
 	}
@@ -131,8 +131,8 @@ func Uninstall(r2pmDir, packageName string) error {
 	return s.UninstallPackage(packageName)
 }
 
-func Upgrade(r2pmDir, packageName string) error {
-	s, err := site.New(r2pmDir)
+func Upgrade(rzpmDir, packageName string) error {
+	s, err := site.New(rzpmDir)
 	if err != nil {
 		return fmt.Errorf(msgCannotInitialize, err)
 	}
@@ -140,8 +140,8 @@ func Upgrade(r2pmDir, packageName string) error {
 	return s.Upgrade(packageName)
 }
 
-func UpgradeAll(r2pmDir string) error {
-	s, err := site.New(r2pmDir)
+func UpgradeAll(rzpmDir string) error {
+	s, err := site.New(rzpmDir)
 	if err != nil {
 		return fmt.Errorf(msgCannotInitialize, err)
 	}

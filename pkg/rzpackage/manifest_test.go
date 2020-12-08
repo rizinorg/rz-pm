@@ -1,4 +1,4 @@
-package r2package
+package rzpackage
 
 import (
 	"strings"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/radareorg/r2pm/pkg/r2package/fetchers"
+	"github.com/rizinorg/rzpm/pkg/rzpackage/fetchers"
 )
 
 func TestManifest_Verify(t *testing.T) {

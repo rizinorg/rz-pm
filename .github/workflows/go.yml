@@ -1,4 +1,3 @@
----
 name: Go
 on:
   pull_request:
@@ -46,50 +45,50 @@ jobs:
         run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
 
       - name: Build the Go binary
-        run: make r2pm
+        run: make rz-pm
 
       - name: Initialize the database
-        run: ./r2pm --debug init
+        run: ./rz-pm --debug init
 
       - name: Make sure r2dec is present in the database
-        run: ./r2pm --debug search dec | grep -q 'converts asm to pseudo-C code'
+        run: ./rz-pm --debug search dec | grep -q 'converts asm to pseudo-C code'
 
       - name: Install from a package file
-        run: ./r2pm --debug install -f test/test.yaml
+        run: ./rz-pm --debug install -f test/test.yaml
 
       - name: Check that the package above was correctly installed
-        run: ./r2pm --debug list installed | grep -q test
+        run: ./rz-pm --debug list installed | grep -q test
 
       - name: Delete the local database
-        run: ./r2pm --debug delete
+        run: ./rz-pm --debug delete
 
       # C binary
 
       - name: Build the C binary
-        run: make r2pm_c
+        run: make rz-pm_c
         env: {CC: "${{matrix.cc}}"}
 
       - name: Initialize the database
-        run: ./r2pm_c init
+        run: ./rz-pm_c init
         env:
           LD_LIBRARY_PATH: .  # for Linux
-          R2PM_DEBUG: 1
+          RZPM_DEBUG: 1
 
       - name: Check that r2dec is available
-        run: ./r2pm_c list-available | grep -q r2dec
+        run: ./rz-pm_c list-available | grep -q r2dec
         env:
           LD_LIBRARY_PATH: .  # for Linux
-          R2PM_DEBUG: 1
+          RZPM_DEBUG: 1
 
       - name: Delete the local database
-        run: ./r2pm_c delete
+        run: ./rz-pm_c delete
         env:
           LD_LIBRARY_PATH: .  # for Linux
-          R2PM_DEBUG: 1
+          RZPM_DEBUG: 1
 
       - name: Run integration tests
         run: make integration-tests
-        env: {R2_VERSION: 4.0.0}
+        env: {RZ_VERSION: 1.0.0}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1

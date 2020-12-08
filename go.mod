@@ -1,4 +1,4 @@
-module github.com/radareorg/r2pm
+module github.com/rizinorg/rzpm
 
 go 1.15
 

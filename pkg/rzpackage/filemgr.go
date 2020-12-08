@@ -1,6 +1,6 @@
-package r2package
+package rzpackage
 
-import "github.com/radareorg/r2pm/pkg"
+import "github.com/rizinorg/rzpm/pkg"
 
 type fileMgr struct{}
 
