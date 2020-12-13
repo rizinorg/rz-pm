@@ -50,7 +50,7 @@ jobs:
       - name: Initialize the database
         run: ./rz-pm --debug init
 
-      - name: Make sure r2dec is present in the database
+      - name: Make sure jsdec is present in the database
         run: ./rz-pm --debug search dec | grep -q 'converts asm to pseudo-C code'
 
       - name: Install from a package file
@@ -74,8 +74,8 @@ jobs:
           LD_LIBRARY_PATH: .  # for Linux
           RZPM_DEBUG: 1
 
-      - name: Check that r2dec is available
-        run: ./rzpm_c list-available | grep -q r2dec
+      - name: Check that jsdec is available
+        run: ./rzpm_c list-available | grep -q jsdec
         env:
           LD_LIBRARY_PATH: .  # for Linux
           RZPM_DEBUG: 1
