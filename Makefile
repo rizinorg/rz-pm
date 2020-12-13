@@ -6,7 +6,7 @@ endif
 
 LIB := librzpm${LIB_EXT}
 
-all: rzpm rzpm_c ${LIB}
+all: rz-pm rzpm_c ${LIB}
 
 .PHONY: tests integration-tests
 
@@ -16,7 +16,7 @@ integration-tests:
 tests:
 	go test ./...
 
-rzpm: $(wildcard internal/**/*.go pkg/**/*.go main.go)
+rz-pm: $(wildcard internal/**/*.go pkg/**/*.go main.go)
 	go build
 
 ${LIB}: $(wildcard internal/**/*.go lib/*.go pkg/**/*.go)
