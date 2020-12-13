@@ -6,12 +6,12 @@ import (
 )
 
 const (
-	orgSubDir     = "RizinOrg"
+	orgSubDir     = "rizin"
 	SiteDirEnvVar = "RZPM_SITEDIR"
 )
 
 func RzDir() string {
-	return filepath.Join(orgSubdDir(), "rizin")
+	return orgSubdDir()
 }
 
 func SiteDir() string {

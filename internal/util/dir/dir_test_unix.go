@@ -9,7 +9,7 @@ import (
 )
 
 func testSiteDir(t *testing.T) {
-	if s := SiteDir(); s != filepath.Join(os.Getenv("HOME"), "bin", "prefix", "RizinOrg", "rz-pm") {
+	if s := SiteDir(); s != filepath.Join(os.Getenv("HOME"), "bin", "prefix", "rizin", "rz-pm") {
 		t.Fatal(s)
 	}
 }
