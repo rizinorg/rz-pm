@@ -10,8 +10,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/rizinorg/rzpm/pkg/rzpackage"
-	"github.com/rizinorg/rzpm/pkg/site"
+	"github.com/rizinorg/rz-pm/pkg/rzpackage"
+	"github.com/rizinorg/rz-pm/pkg/site"
 )
 
 const (

@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/rizinorg/rzpm/testdata"
+	"github.com/rizinorg/rz-pm/testdata"
 )
 
 func testSiteDir(t *testing.T) {

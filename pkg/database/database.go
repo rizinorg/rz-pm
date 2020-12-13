@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rizinorg/rzpm/pkg/git"
-	"github.com/rizinorg/rzpm/pkg/rzpackage"
+	"github.com/rizinorg/rz-pm/pkg/git"
+	"github.com/rizinorg/rz-pm/pkg/rzpackage"
 )
 
 const (

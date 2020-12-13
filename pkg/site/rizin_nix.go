@@ -11,8 +11,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/rizinorg/rzpm/pkg/git"
-	"github.com/rizinorg/rzpm/pkg/process"
+	"github.com/rizinorg/rz-pm/pkg/git"
+	"github.com/rizinorg/rz-pm/pkg/process"
 )
 
 func (s Site) InstallRizin(prefix, version string) error {

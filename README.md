@@ -9,7 +9,7 @@ This tool is still a work in progress.
 
 | CI | Badges/URL |
 |----------|---------------------------------------------------------------------|
-| **GithubCI**  | [![Tests Status](https://github.com/rizinorg/rzpm/workflows/Go/badge.svg)](https://github.com/rizinorg/rzpm/actions?query=workflow%3AGo)|
+| **GithubCI**  | [![Tests Status](https://github.com/rizinorg/rz-pm/workflows/Go/badge.svg)](https://github.com/rizinorg/rz-pm/actions?query=workflow%3AGo)|
 
 ## Package example
 

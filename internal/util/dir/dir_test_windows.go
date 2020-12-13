@@ -3,7 +3,7 @@ package dir
 import (
 	"testing"
 
-	"github.com/rizinorg/rzpm/testdata"
+	"github.com/rizinorg/rz-pm/testdata"
 )
 
 func testSiteDir(t *testing.T) {
