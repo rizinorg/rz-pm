@@ -65,23 +65,23 @@ jobs:
       # C binary
 
       - name: Build the C binary
-        run: make rz-pm_c
+        run: make rzpm_c
         env: {CC: "${{matrix.cc}}"}
 
       - name: Initialize the database
-        run: ./rz-pm_c init
+        run: ./rzpm_c init
         env:
           LD_LIBRARY_PATH: .  # for Linux
           RZPM_DEBUG: 1
 
       - name: Check that r2dec is available
-        run: ./rz-pm_c list-available | grep -q r2dec
+        run: ./rzpm_c list-available | grep -q r2dec
         env:
           LD_LIBRARY_PATH: .  # for Linux
           RZPM_DEBUG: 1
 
       - name: Delete the local database
-        run: ./rz-pm_c delete
+        run: ./rzpm_c delete
         env:
           LD_LIBRARY_PATH: .  # for Linux
           RZPM_DEBUG: 1
