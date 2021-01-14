@@ -11,7 +11,7 @@ const (
 )
 
 func RzDir() string {
-	return orgSubdDir()
+	return platformPrefix()
 }
 
 func SiteDir() string {
@@ -19,9 +19,5 @@ func SiteDir() string {
 		return envVar
 	}
 
-	return filepath.Join(orgSubdDir(), "rz-pm")
-}
-
-func orgSubdDir() string {
-	return filepath.Join(platformPrefix(), orgSubDir)
+	return filepath.Join(platformPrefix(), "share", "rz-pm")
 }

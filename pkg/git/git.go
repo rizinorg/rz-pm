@@ -46,6 +46,10 @@ func (r Repository) Checkout(ref string) error {
 	return r.Run("checkout", ref)
 }
 
+func (r Repository) UpdateSubmodules() error {
+	return r.Run("submodule", "update", "--init")
+}
+
 func (r Repository) Fetch() error {
 	return r.Run("fetch")
 }
