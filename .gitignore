@@ -10,3 +10,5 @@ libr2pm.so
 *.so
 rz-pm
 rzpm_c
+
+coverage.txt
