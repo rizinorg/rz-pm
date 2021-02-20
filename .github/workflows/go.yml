@@ -111,12 +111,12 @@ jobs:
         run: |
           export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
           make integration-tests
-        env: {RZ_VERSION: dev}
+        env: {RZ_VERSION: v0.1.0}
 
       - name: Run integration tests (Windows)
         if: matrix.os == 'windows-latest'
         run: make integration-tests
-        env: {RZ_VERSION: dev}
+        env: {RZ_VERSION: v0.1.0}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
