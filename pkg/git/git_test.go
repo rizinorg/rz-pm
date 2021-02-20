@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rizinorg/rzpm/pkg/process"
-	"github.com/rizinorg/rzpm/testdata"
+	"github.com/rizinorg/rz-pm/pkg/process"
+	"github.com/rizinorg/rz-pm/testdata"
 )
 
 func TestInit(t *testing.T) {

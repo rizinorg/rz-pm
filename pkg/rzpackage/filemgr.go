@@ -1,6 +1,6 @@
 package rzpackage
 
-import "github.com/rizinorg/rzpm/pkg"
+import "github.com/rizinorg/rz-pm/pkg"
 
 type fileMgr struct{}
 

@@ -1,6 +1,6 @@
 name: test
 type: git
-repo: https://github.com/rizinorg/rzpm
+repo: https://github.com/rizinorg/rz-pm
 desc: Test package for rz-pm
 
 install:

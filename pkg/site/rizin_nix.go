@@ -6,13 +6,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
-	"strings"
 
-	"github.com/rizinorg/rzpm/pkg/git"
-	"github.com/rizinorg/rzpm/pkg/process"
+	"github.com/rizinorg/rz-pm/pkg/git"
+	"github.com/rizinorg/rz-pm/pkg/process"
 )
 
 func (s Site) InstallRizin(prefix, version string) error {
@@ -49,53 +46,30 @@ func (s Site) InstallRizin(prefix, version string) error {
 	}
 
 	if err := repo.Checkout(version); err != nil {
-		return fmt.Errorf("could not checkout %q: %v", version, err)
+		return fmt.Errorf("Could not checkout %q: %v", version, err)
 	}
 
-	if err := repo.Pull("origin", version, nil); err != nil {
+	if err := repo.UpdateSubmodules(); err != nil {
+		return fmt.Errorf("Could not update submodules: %v", err)
+	}
+
+	if err := repo.Pull("origin", version, []string{"--recurse-submodules"}); err != nil {
 		return err
 	}
 
-	// Allow ./configure to be executed
-	configurePath := filepath.Join(srcDir, "configure")
-
-	log.Print("Allowing the execution of " + configurePath)
-
-	if err := os.Chmod(configurePath, 0755); err != nil {
+	buildDir := fmt.Sprintf("build-%s", version)
+	prefixArg := fmt.Sprintf("--prefix=%s", prefix)
+	if res, err := process.Run("meson", []string{prefixArg, "--buildtype=release", buildDir}, srcDir); err != nil {
+		log.Print(string(res.Stdout.String()))
 		return err
 	}
 
-	env := os.Environ()
-
-	cmdConfigure := exec.Command("./configure", "--prefix="+prefix)
-	cmdConfigure.Dir = srcDir
-	cmdConfigure.Env = env
-
-	log.Print("Running " + strings.Join(cmdConfigure.Args, " "))
-
-	if out, err := cmdConfigure.CombinedOutput(); err != nil {
-		log.Print(string(out))
+	if res, err := process.Run("ninja", []string{"-C", buildDir}, srcDir); err != nil {
+		log.Print(string(res.Stdout.String()))
 		return err
 	}
 
-	makeBin := "make"
-
-	if runtime.GOOS == "freebsd" {
-		makeBin = "gmake"
-	}
-
-	cmdMake := exec.Command(makeBin)
-	cmdMake.Dir = srcDir
-	cmdMake.Env = env
-
-	log.Print("Running " + strings.Join(cmdMake.Args, " "))
-
-	if out, err := cmdMake.Output(); err != nil {
-		log.Print(string(out))
-		return err
-	}
-
-	if _, err := process.Run(makeBin, []string{"install"}, srcDir); err != nil {
+	if _, err := process.Run("ninja", []string{"-C", buildDir, "install"}, srcDir); err != nil {
 		return err
 	}
 

@@ -13,7 +13,7 @@ import (
 )
 
 func (s Site) InstallRizin(prefix, version string) error {
-	url := fmt.Sprintf("http://radare.mikelloc.com/get/%s/rizin-msvc_64-%s.zip", version, version)
+	url := fmt.Sprintf("https://github.com/rizinorg/rizin/releases/download/%s/rizin-windows-static-%s.zip", version, version)
 
 	fd, err := ioutil.TempFile("", "rz-pm_*.zip")
 	if err != nil {

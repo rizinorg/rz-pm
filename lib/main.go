@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/rizinorg/rzpm/internal/features"
+	"github.com/rizinorg/rz-pm/internal/features"
 )
 
 /*

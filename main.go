@@ -8,9 +8,9 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/rizinorg/rzpm/internal/features"
-	"github.com/rizinorg/rzpm/internal/util/dir"
-	"github.com/rizinorg/rzpm/pkg/rzpackage"
+	"github.com/rizinorg/rz-pm/internal/features"
+	"github.com/rizinorg/rz-pm/internal/util/dir"
+	"github.com/rizinorg/rz-pm/pkg/rzpackage"
 )
 
 func getArgumentOrExit(c *cli.Context) string {

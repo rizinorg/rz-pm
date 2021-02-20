@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/rizinorg/rzpm/testdata"
+	"github.com/rizinorg/rz-pm/testdata"
 )
 
 func TestNew(t *testing.T) {

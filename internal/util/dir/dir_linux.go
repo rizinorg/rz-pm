@@ -11,6 +11,6 @@ func platformPrefix() string {
 		return xdgDataHome
 	}
 
-	return filepath.Join(os.Getenv("HOME"), ".local", "share")
+	return filepath.Join(os.Getenv("HOME"), ".local")
 
 }

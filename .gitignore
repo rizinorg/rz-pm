@@ -5,3 +5,10 @@ r2pm_c
 # c-shared files
 libr2pm.h
 libr2pm.so
+
+.vscode/
+*.so
+rz-pm
+rzpm_c
+
+coverage.txt

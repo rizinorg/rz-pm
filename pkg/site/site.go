@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rizinorg/rzpm/pkg"
-	"github.com/rizinorg/rzpm/pkg/database"
-	"github.com/rizinorg/rzpm/pkg/rzpackage"
+	"github.com/rizinorg/rz-pm/pkg"
+	"github.com/rizinorg/rz-pm/pkg/database"
+	"github.com/rizinorg/rz-pm/pkg/rzpackage"
 )
 
 type Site struct {

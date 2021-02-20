@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/rizinorg/rzpm/pkg/process"
+	"github.com/rizinorg/rz-pm/pkg/process"
 )
 
 const gitBin = "git"
@@ -44,6 +44,10 @@ func (r Repository) AddRemote(name, url string) error {
 
 func (r Repository) Checkout(ref string) error {
 	return r.Run("checkout", ref)
+}
+
+func (r Repository) UpdateSubmodules() error {
+	return r.Run("submodule", "update", "--init")
 }
 
 func (r Repository) Fetch() error {
