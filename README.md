@@ -13,7 +13,7 @@ This tool is still a work in progress.
 
 ## Package example
 
-The official database is available [here](https://github.com/rizinorg/rzpm-db).
+The official database is available [here](https://github.com/rizinorg/rz-pm-db).
 
 ```yaml
 name: r2dec
