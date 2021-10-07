@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/rizinorg/rzpm/pkg/git"
+	"github.com/rizinorg/rz-pm/pkg/git"
 )
 
 type gitInstaller struct {

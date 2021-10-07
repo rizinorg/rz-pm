@@ -1,4 +1,4 @@
-module github.com/rizinorg/rzpm
+module github.com/rizinorg/rz-pm
 
 go 1.15
 

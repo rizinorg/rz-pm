@@ -10,12 +10,12 @@ The site is initialized using the `rz-pm init` command.
 For each supported operating system, by order of preference:
 
 - Linux:
-  - `${XDG_DATA_HOME}/RizinOrg/rz-pm` if `$XDG_DATA_HOME` is defined;
-  - `${HOME}/.local/share/RizinOrg/rz-pm` otherwise
-- BSD (including macOS): `${HOME}/Library/RizinOrg/rz-pm`
+  - `${XDG_DATA_HOME}/rizin/rz-pm` if `$XDG_DATA_HOME` is defined;
+  - `${HOME}/.local/share/rizin/rz-pm` otherwise
+- BSD (including macOS): `${HOME}/Library/rizin/rz-pm`
 - Windows
-  - `${APPDATA}/RizinOrg/rz-pm` if `$APPDATA` is defined
-  - `${HOMEPATH}/RizinOrg/rz-pm` otherwise
+  - `${APPDATA}/rizin/rz-pm` if `$APPDATA` is defined
+  - `${HOMEPATH}/rizin/rz-pm` otherwise
 
 ## Contents
 

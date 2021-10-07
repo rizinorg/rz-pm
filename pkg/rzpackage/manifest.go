@@ -7,7 +7,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/rizinorg/rzpm/pkg/rzpackage/fetchers"
+	"github.com/rizinorg/rz-pm/pkg/rzpackage/fetchers"
 )
 
 type ManagedFile struct {

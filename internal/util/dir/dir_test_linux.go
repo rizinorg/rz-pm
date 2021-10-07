@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/rizinorg/rzpm/testdata"
+	"github.com/rizinorg/rz-pm/testdata"
 )
 
 func testSiteDir(t *testing.T) {
@@ -13,7 +13,7 @@ func testSiteDir(t *testing.T) {
 	t.Run(xdgDataHomeVar+"=/tmp/test", func(t *testing.T) {
 		testdata.SetEnvVar(t, xdgDataHomeVar, "/tmp/test")
 
-		if s := SiteDir(); s != "/tmp/test/RizinOrg/rz-pm" {
+		if s := SiteDir(); s != "/tmp/test/share/rz-pm" {
 			t.Fatal(s)
 		}
 	})
@@ -23,7 +23,7 @@ func testSiteDir(t *testing.T) {
 			t.Fatalf("could not unset %s: %v", xdgDataHomeVar, err)
 		}
 
-		if s := SiteDir(); s != os.Getenv("HOME")+"/.local/share/RizinOrg/rz-pm" {
+		if s := SiteDir(); s != os.Getenv("HOME")+"/.local/share/rz-pm" {
 			t.Fatal(s)
 		}
 	})

@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/rizinorg/rzpm/pkg/rzpackage/fetchers"
+	"github.com/rizinorg/rz-pm/pkg/rzpackage/fetchers"
 )
 
 func TestManifest_Verify(t *testing.T) {
