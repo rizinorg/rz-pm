@@ -32,7 +32,7 @@ func Delete(rzpmDir string) error {
 func Init(rzpmDir string) error {
 	s, err := site.New(rzpmDir)
 	if err != nil {
-		return fmt.Errorf("could not initialize: %w", err)
+		return fmt.Errorf(msgCannotInitialize, err)
 	}
 
 	return s.Database().InitOrUpdate()
