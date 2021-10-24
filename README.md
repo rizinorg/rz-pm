@@ -16,10 +16,10 @@ This tool is still a work in progress.
 The official database is available [here](https://github.com/rizinorg/rz-pm-db).
 
 ```yaml
-name: r2dec
+name: jsdec
 type: git
-repo: https://github.com/wargio/r2dec-js
-desc: "[r2-r2pipe-node] an Experimental Decompiler"
+repo: https://github.com/rizinorg/jsdec
+desc: "[rz-native] converts asm to pseudo-C code."
 
 install:
   - make -C p
