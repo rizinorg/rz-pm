@@ -1,10 +1,10 @@
 # Binaries
-r2pm
-r2pm_c
+rz-pm
+rzpm_c
 
 # c-shared files
-libr2pm.h
-libr2pm.so
+librzpm.h
+librzpm.so
 
 .vscode/
 *.so

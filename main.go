@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -28,7 +27,6 @@ func getArgumentOrExit(c *cli.Context) string {
 }
 
 func main() {
-	rzDir := dir.RzDir()
 	rzpmDir := dir.SiteDir()
 
 	listAvailablePackages := func(c *cli.Context) error {
@@ -99,34 +97,6 @@ func main() {
 
 				return features.Install(rzpmDir, packageName)
 			},
-			Subcommands: []*cli.Command{
-				{
-					Name:      "rizin",
-					Usage:     "install rizin",
-					ArgsUsage: "VERSION",
-					Flags: []cli.Flag{
-						&cli.StringFlag{
-							Name:  "p",
-							Usage: "rizin's configure --prefix",
-							Value: rzDir,
-						},
-					},
-					Action: func(c *cli.Context) error {
-						if c.NArg() != 1 {
-							return errors.New("a version number is required")
-						}
-
-						version := c.Args().First()
-
-						prefix := c.String("p")
-						if prefix == "" {
-							return errors.New("A prefix is required")
-						}
-
-						return features.InstallRizin(rzpmDir, rzDir, version)
-					},
-				},
-			},
 		},
 		{
 			Name:    "list",
@@ -182,15 +152,6 @@ func main() {
 				packageName := getArgumentOrExit(c)
 
 				return features.Uninstall(rzpmDir, packageName)
-			},
-			Subcommands: []*cli.Command{
-				{
-					Name:  "rizin",
-					Usage: "uninstall rizin",
-					Action: func(c *cli.Context) error {
-						return features.UninstallRizin(rzpmDir, rzDir)
-					},
-				},
 			},
 		},
 		{

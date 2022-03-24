@@ -10,10 +10,6 @@ const (
 	SiteDirEnvVar = "RZPM_SITEDIR"
 )
 
-func RzDir() string {
-	return platformPrefix()
-}
-
 func SiteDir() string {
 	if envVar := os.Getenv(SiteDirEnvVar); envVar != "" {
 		return envVar
