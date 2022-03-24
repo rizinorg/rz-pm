@@ -56,24 +56,6 @@ func InstallFromFile(rzpmDir, path string) error {
 	return s.InstallPackageFromFile(path)
 }
 
-func InstallRizin(rzpmDir, rzDir, version string) error {
-	s, err := site.New(rzpmDir)
-	if err != nil {
-		return err
-	}
-
-	return s.InstallRizin(rzDir, version)
-}
-
-func UninstallRizin(rzpmDir, rzDir string) error {
-	s, err := site.New(rzpmDir)
-	if err != nil {
-		return err
-	}
-
-	return s.UninstallRizin(rzDir)
-}
-
 func ListAvailable(rzpmDir string) ([]rzpackage.Info, error) {
 	s, err := site.New(rzpmDir)
 	if err != nil {
