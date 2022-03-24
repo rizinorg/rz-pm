@@ -1,14 +1,7 @@
 # Binaries
 rz-pm
-rzpm_c
-
-# c-shared files
-librzpm.h
-librzpm.so
 
 .vscode/
-*.so
 rz-pm
-rzpm_c
 
 coverage.txt

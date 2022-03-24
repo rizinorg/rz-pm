@@ -5,7 +5,6 @@ on:
   push:
     branches: [master]
 jobs:
-
   build:
     name: ${{ matrix.name }}
 
@@ -84,41 +83,17 @@ jobs:
       - name: Delete the local database
         run: ./rz-pm --debug delete
 
-      # C binary
-
-      - name: Build the C binary
-        run: make rzpm_c
-        env: {CC: "${{matrix.cc}}"}
-
-      - name: Initialize the database
-        run: ./rzpm_c init
-        env:
-          LD_LIBRARY_PATH: .  # for Linux
-          RZPM_DEBUG: 1
-
-      - name: Check that jsdec is available
-        run: ./rzpm_c list-available | grep -q jsdec
-        env:
-          LD_LIBRARY_PATH: .  # for Linux
-          RZPM_DEBUG: 1
-
-      - name: Delete the local database
-        run: ./rzpm_c delete
-        env:
-          LD_LIBRARY_PATH: .  # for Linux
-          RZPM_DEBUG: 1
-
       - name: Run integration tests
         if: matrix.os != 'windows-latest'
         run: |
           export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
           make integration-tests
-        env: {RZ_VERSION: v0.1.0}
+        env: { RZ_VERSION: v0.1.0 }
 
       - name: Run integration tests (Windows)
         if: matrix.os == 'windows-latest'
         run: make integration-tests
-        env: {RZ_VERSION: v0.1.0}
+        env: { RZ_VERSION: v0.1.0 }
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
