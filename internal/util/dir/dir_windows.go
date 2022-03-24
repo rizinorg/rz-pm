@@ -2,10 +2,6 @@ package dir
 
 import "os"
 
-func platformPrefix() string {
-	if appData := os.Getenv("APPDATA"); appData != "" {
-		return appData
-	}
-
+func homePath() string {
 	return os.Getenv("HOMEPATH")
 }

@@ -6,7 +6,6 @@ import (
 )
 
 const (
-	orgSubDir     = "rizin"
 	SiteDirEnvVar = "RZPM_SITEDIR"
 )
 
@@ -15,5 +14,5 @@ func SiteDir() string {
 		return envVar
 	}
 
-	return filepath.Join(platformPrefix(), "share", "rz-pm")
+	return filepath.Join(homePath(), "rz-pm")
 }

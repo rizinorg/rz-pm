@@ -7,6 +7,6 @@ import (
 	"path/filepath"
 )
 
-func platformPrefix() string {
-	return filepath.Join(os.Getenv("HOME"), "bin", "prefix")
+func homePath() string {
+	return os.Getenv("HOME")
 }
