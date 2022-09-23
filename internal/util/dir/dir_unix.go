@@ -4,7 +4,6 @@ package dir
 
 import (
 	"os"
-	"path/filepath"
 )
 
 func homePath() string {
