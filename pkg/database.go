@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,6 +14,8 @@ import (
 type Database struct {
 	Path string
 }
+
+var ErrRizinPackageWrongHash = errors.New("wrong hash")
 
 const dbPath string = "db"
 

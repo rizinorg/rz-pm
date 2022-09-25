@@ -15,51 +15,24 @@ A plugin file is a text file in the YAML format that contains various metadata a
 name: my-package  # must be unique and equals to the file name
 version: 1.2.3
 description: Some description
-
-install:
-
-  windows:
-    source:
-      type: zip
-      url: http://a-random.url/zip-archive.zip
-    out:
-      - path: bin/exe1  # relative to the extracted directory
-        type: exe
-      - path: lib/mylib
-        type: shared-lib
-
-  linux:
-    source:
-      type: git
-      repo: git@github.com:username/project.git
-      ref: master  # or a tag
-    commands:
-      - './configure --prefix {{ .DestPath }}'
-      - make
-    out:
-      - path: bin/exe1
-        type: exe
-      - path: lib/mylib
-        type: shared-lib
-
-  macos:
-    source:
-      type: git
-      repo: git@github.com:username/project.git
-      ref: master  # or a tag
-    commands:
-      - gcc -o exe1 exe1.c -I{{ .RzHeadersPath }} -L{{ .RzLibsPath }}
-    out:
-      - path: exe1
-        type: exe
+source:
+  url: http://a-random.url/zip-archive.zip
+  hash: sha256hash
+  build_system: meson
+  build_arguments:
+    - -Darg1=val1
+    - -Darg2=val2
+artifacts:
+  - os: linux
+    url: http://a-random.url/zip-archive.zip
+    hash: sha256hash
+    bins:
+      - path/bin1
+      - path/bin2
+    libs:
+      - path/lib1
+      - path/lib2
+    plugins:
+      - path/plugin1
+      - path/plugin2
 ```
-
-### Template variables
-
-To accomodate those plugins that need to compile against `rizin` libraries, `rz-pm` will replace the following variables with their value in the commands:
-
-|Name|Description|
-|----|-----------|
-|`DestPath`|The destination directory for plugins|
-|`RzHeadersPath`|The directory where `rizin` headers are located|
-|`RzLibsPath`|The directory where `rizin` libraries are located|
