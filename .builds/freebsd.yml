@@ -9,7 +9,7 @@ environment:
 sources:
     - https://github.com/rizinorg/rz-pm
 tasks:
-    - install rizin: |
+    - install_rizin: |
         git clone --depth=1 https://github.com/rizinorg/rizin
         cd rizin
         meson --buildtype=release --prefix=/usr build
