@@ -14,7 +14,6 @@ jobs:
         name:
           - macos-clang
           - ubuntu-clang
-          - ubuntu-gcc
           - windows-gcc
         include:
           - name: macos-clang
@@ -31,71 +30,46 @@ jobs:
             cc: gcc
 
     steps:
-      - name: Set up Go 1.15
-        uses: actions/setup-go@v1
-        with:
-          go-version: 1.15
-        id: go
-
-      - name: Install apt dependencies
+      - name: Install python
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get --assume-yes install python3-wheel python3-setuptools
-      - name: Install dependencies
-        if: matrix.os != 'windows-latest'
-        run: pip3 install --user meson ninja
+        run: sudo apt-get --assume-yes install python3-wheel python3-setuptools python3-dev ninja-build meson
       - uses: actions/setup-python@v2
         if: matrix.os == 'windows-latest'
       - name: Install dependencies (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os != 'ubuntu-latest'
         run: |
           python -m pip install --upgrade pip
           pip install meson ninja
+      - uses: actions/checkout@v2
+      - name: Install Rizin
+        run: |
+            git clone --depth=1 https://github.com/rizinorg/rizin
+            cd rizin
+            meson --buildtype=release --prefix=/usr build
+            ninja -C build
+            sudo ninja -C build install
+            cd ..
+
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.19
+        id: go
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v1
 
-      # Go binary
-
-      - name: Run unit tests (*nix)
-        if: matrix.os != 'windows-latest'
-        run: |
-          export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-          go test ./... -race -coverprofile=coverage.txt -covermode=atomic
-      - name: Run unit tests (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Run unit tests
         run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
 
       - name: Build the Go binary
-        run: make rz-pm
-
-      - name: Initialize the database
-        run: ./rz-pm --debug init
+        run: go build
 
       - name: Make sure jsdec is present in the database
-        run: ./rz-pm --debug search dec | grep -q 'converts asm to pseudo-C code'
+        run: ./rz-pm list | grep -q 'Converts asm to pseudo-C code'
 
-      - name: Install from a package file
-        run: ./rz-pm --debug install -f test/test.yaml
+      - name: Install jsdec
+        run: ./rz-pm install jsdec
 
-      - name: Check that the package above was correctly installed
-        run: ./rz-pm --debug list installed | grep -q test
-
-      - name: Delete the local database
-        run: ./rz-pm --debug delete
-
-      - name: Run integration tests
-        if: matrix.os != 'windows-latest'
-        run: |
-          export PATH=${HOME}/Library/Python/3.8/bin:${HOME}/Library/Python/3.9/bin:${HOME}/.local/bin:${PATH}
-          make integration-tests
-        env: { RZ_VERSION: v0.1.0 }
-
-      - name: Run integration tests (Windows)
-        if: matrix.os == 'windows-latest'
-        run: make integration-tests
-        env: { RZ_VERSION: v0.1.0 }
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Check jsdec
+        run: ls $(rizin -H RZ_USER_PLUGINS) | grep core_pdd
