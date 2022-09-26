@@ -14,7 +14,7 @@ jobs:
         name:
           - macos-clang
           - ubuntu-clang
-          - windows-gcc
+          # - windows-gcc
         include:
           - name: macos-clang
             os: macos-latest
@@ -26,11 +26,11 @@ jobs:
             cc: clang
             prefix: /usr
             sudo: sudo
-          - name: windows-gcc
-            os: windows-latest
-            cc: gcc
-            prefix: C:\
-            sudo: ''
+          # - name: windows-gcc
+          #   os: windows-latest
+          #   cc: gcc
+          #   prefix: C:\
+          #   sudo: ''
 
     steps:
       - name: Install python
