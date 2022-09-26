@@ -45,7 +45,6 @@ jobs:
           python3 -m pip install meson ninja
       - uses: actions/checkout@v2
       - name: Install Rizin
-        if: matrix.os != 'windows-latest'
         run: |
             git clone --depth=1 https://github.com/rizinorg/rizin
             cd rizin
