@@ -6,12 +6,23 @@ packages:
 environment:
     CC: clang
     HOST_CC: clang # Required to build Rizin
-    RZ_VERSION: 0.4.0 # Required for the integration tests
 sources:
     - https://github.com/rizinorg/rz-pm
 tasks:
-    - build: |
-        gmake
-    - test: |
-        gmake tests
-        gmake integration-tests
+    - deps: pkg install py39-pip ninja-build meson go
+    - install rizin: |
+        git clone --depth=1 https://github.com/rizinorg/rizin
+        cd rizin
+        meson --buildtype=release --prefix=/usr build
+        ninja -C build
+        sudo ninja -C build install
+        cd ..
+
+    - unit_tests: go test ./...
+    - build: go build
+    - list_jsdec: |
+        ./rz-pm list | grep -q 'Converts asm to pseudo-C code'
+    - install_jsdec: |
+        ./rz-pm install jsdec
+    - check_jsdec: |
+        ls $(rizin -H RZ_USER_PLUGINS) | grep core_pdd
