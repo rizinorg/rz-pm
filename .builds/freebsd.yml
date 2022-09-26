@@ -1,15 +1,14 @@
 image: freebsd/latest
 packages:
-    - devel/gmake
-    - devel/llvm
     - lang/go
+    - meson
+    - ninja
 environment:
     CC: clang
     HOST_CC: clang # Required to build Rizin
 sources:
     - https://github.com/rizinorg/rz-pm
 tasks:
-    - deps: pkg install py39-pip ninja-build meson go
     - install rizin: |
         git clone --depth=1 https://github.com/rizinorg/rizin
         cd rizin
@@ -18,8 +17,10 @@ tasks:
         sudo ninja -C build install
         cd ..
 
-    - unit_tests: go test ./...
-    - build: go build
+    - unit_tests: |
+        go test ./...
+    - build: |
+        go build
     - list_jsdec: |
         ./rz-pm list | grep -q 'Converts asm to pseudo-C code'
     - install_jsdec: |
