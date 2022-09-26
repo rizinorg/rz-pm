@@ -25,7 +25,7 @@ func TestEmptySite(t *testing.T) {
 	defer os.RemoveAll(tmpPath)
 	site, err := InitSite(tmpPath)
 	require.Nil(t, err, "site should be initialized in tmpPath")
-	assert.Equal(t, tmpPath, site.Path, "site path should be tmpPath")
+	assert.Equal(t, tmpPath, site.GetBaseDir(), "site path should be tmpPath")
 	_, err = os.Stat(filepath.Join(tmpPath, "rz-pm-db"))
 	assert.Nil(t, err, "rz-pm database directory should be there")
 	_, err = os.Stat(filepath.Join(tmpPath, "rz-pm-db", "README.md"))
@@ -59,4 +59,83 @@ func TestListPackages(t *testing.T) {
 	assert.Nil(t, err, "no errors while retrieving packages")
 	assert.True(t, len(packages) > 0, "there should be at least one package in the database")
 	assert.True(t, containsPackage(packages, "jsdec"), "jsdec package should be present in the database")
+}
+
+func TestGoodPackageFormat(t *testing.T) {
+	tmpFile, err := os.CreateTemp("", "package-format")
+	require.NoError(t, err, "temporary file should be created")
+	defer tmpFile.Close()
+
+	tmpFile.WriteString(`name: simple
+version: 0.0.1
+description: simple description
+source:
+  url: https://github.com/rizinorg/jsdec
+  hash: 5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d
+  build_system: meson
+  build_arguments:
+    - -Djsc_folder=..
+  directory: jsdec-0.4.0/p
+`)
+
+	pkg, err := parsePackageFromFile(tmpFile.Name())
+	require.NoError(t, err, "no errors in parsing the above package file")
+	assert.Equal(t, "simple", pkg.Name)
+	assert.Equal(t, "0.0.1", pkg.Version)
+	assert.Equal(t, "simple description", pkg.Description)
+	assert.Equal(t, "https://github.com/rizinorg/jsdec", pkg.Source.URL)
+	assert.Equal(t, "5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d", pkg.Source.Hash)
+	assert.Equal(t, Meson, pkg.Source.BuildSystem)
+	assert.Contains(t, pkg.Source.BuildArguments, "-Djsc_folder=..")
+	assert.Equal(t, "jsdec-0.4.0/p", pkg.Source.Directory)
+}
+
+func TestWrongPackageFormat(t *testing.T) {
+	tmpFile, err := os.CreateTemp("", "package-format")
+	require.NoError(t, err, "temporary file should be created")
+	defer tmpFile.Close()
+
+	f1 := `version: 0.0.1
+description: simple description
+source:
+  url: https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz
+  hash: 5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d
+  build_system: meson
+  build_arguments:
+    - -Djsc_folder=..
+  directory: jsdec-0.4.0/p
+`
+
+	f2 := `name: simple
+description: simple description
+source:
+  url: https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz
+  hash: 5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d
+  build_system: meson
+  build_arguments:
+    - -Djsc_folder=..
+  directory: jsdec-0.4.0/p
+`
+
+	f3 := `name: simple
+version: 0.0.1
+description: simple description
+`
+
+	tmpFile.WriteString(f1)
+
+	_, err = parsePackageFromFile(tmpFile.Name())
+	assert.Error(t, err, "missing name should fail parsing")
+
+	tmpFile.Truncate(0)
+	tmpFile.WriteString(f2)
+
+	_, err = parsePackageFromFile(tmpFile.Name())
+	assert.Error(t, err, "missing version should fail parsing")
+
+	tmpFile.Truncate(0)
+	tmpFile.WriteString(f3)
+
+	_, err = parsePackageFromFile(tmpFile.Name())
+	assert.Error(t, err, "missing source should fail parsing")
 }

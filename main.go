@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/rizinorg/rz-pm/internal/util/dir"
+	"github.com/rizinorg/rz-pm/pkg"
 	"github.com/urfave/cli/v2"
 )
 
@@ -44,7 +46,7 @@ func main() {
 		{
 			Name:      "install",
 			Usage:     "install a package",
-			ArgsUsage: "[PACKAGE]",
+			ArgsUsage: "[package-name]",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:  "f",
@@ -52,7 +54,32 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				return fmt.Errorf("install command is not implemented yet")
+				packageName := c.Args().First()
+				if packageName == "" {
+					cli.ShowCommandHelp(c, "install")
+					return fmt.Errorf("wrong usage of install command")
+				}
+
+				site, err := pkg.InitSite(dir.SiteDir())
+				if err != nil {
+					return err
+				}
+
+				pkg, err := site.GetPackage(packageName)
+				if err != nil {
+					return err
+				}
+
+				err = site.DownloadPackage(pkg)
+				if err != nil {
+					return err
+				}
+
+				err = site.InstallPackage(pkg)
+				if err != nil {
+					return err
+				}
+				return nil
 			},
 		},
 		{
@@ -60,15 +87,19 @@ func main() {
 			Aliases: []string{"ls"},
 			Usage:   "list packages",
 			Action: func(c *cli.Context) error {
-				return fmt.Errorf("list command is not implemented yet")
-			},
-		},
-		{
-			Name:      "search",
-			Usage:     "search for a package in the database",
-			ArgsUsage: "PATTERN",
-			Action: func(c *cli.Context) error {
-				return fmt.Errorf("search command is not implemented yet")
+				site, err := pkg.InitSite(dir.SiteDir())
+				if err != nil {
+					return err
+				}
+				packages, err := site.ListAvailablePackages()
+				if err != nil {
+					return err
+				}
+
+				for _, pkg := range packages {
+					fmt.Printf("%s: %s\n", pkg.Name, pkg.Description)
+				}
+				return nil
 			},
 		},
 		{
@@ -76,7 +107,27 @@ func main() {
 			Usage:     "uninstall a package",
 			ArgsUsage: "PACKAGE",
 			Action: func(c *cli.Context) error {
-				return fmt.Errorf("uninstall command is not implemented yet")
+				packageName := c.Args().First()
+				if packageName == "" {
+					cli.ShowCommandHelp(c, "install")
+					return fmt.Errorf("wrong usage of install command")
+				}
+
+				site, err := pkg.InitSite(dir.SiteDir())
+				if err != nil {
+					return err
+				}
+
+				pkg, err := site.GetPackage(packageName)
+				if err != nil {
+					return err
+				}
+
+				err = site.UninstallPackage(pkg)
+				if err != nil {
+					return err
+				}
+				return nil
 			},
 		},
 	}

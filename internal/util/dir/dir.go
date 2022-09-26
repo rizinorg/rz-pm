@@ -16,3 +16,7 @@ func SiteDir() string {
 
 	return filepath.Join(homePath(), "rz-pm")
 }
+
+func HomeDir() string {
+	return homePath()
+}

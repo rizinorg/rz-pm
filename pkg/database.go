@@ -16,6 +16,7 @@ type Database struct {
 }
 
 var ErrRizinPackageWrongHash = errors.New("wrong hash")
+var ErrRizinPackageWrongFormat = errors.New("wrong format")
 
 const dbPath string = "db"
 
@@ -63,6 +64,10 @@ func parsePackageFromFile(path string) (RizinPackage, error) {
 	if err != nil {
 		return RizinPackage{}, err
 	}
+
+	if p.Name == "" || p.Version == "" || p.Source.URL == "" || p.Source.Hash == "" || p.Source.BuildSystem == "" {
+		return RizinPackage{}, ErrRizinPackageWrongFormat
+	}
 	return p, nil
 }
 
@@ -92,4 +97,19 @@ func (d Database) ListAvailablePackages() ([]RizinPackage, error) {
 	}
 
 	return packages, nil
+}
+
+func (d Database) GetPackage(name string) (RizinPackage, error) {
+	packages, err := d.ListAvailablePackages()
+	if err != nil {
+		return RizinPackage{}, err
+	}
+
+	for _, pkg := range packages {
+		if pkg.Name == name {
+			return pkg, nil
+		}
+	}
+
+	return RizinPackage{}, fmt.Errorf("package not found")
 }

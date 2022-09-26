@@ -13,6 +13,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/rizinorg/rz-pm/internal/util/dir"
 )
 
 type BuildSystem string
@@ -24,15 +26,15 @@ const (
 type RizinPackageSource struct {
 	URL            string
 	Hash           string
-	BuildSystem    BuildSystem
-	BuildArguments []string
+	BuildSystem    BuildSystem `yaml:"build_system"`
+	BuildArguments []string    `yaml:"build_arguments"`
 	Directory      string
 }
 
 type RizinPackage struct {
 	Name        string
 	Version     string
-	Description string `yaml:"desc"`
+	Description string
 	Source      RizinPackageSource
 }
 
@@ -133,10 +135,16 @@ func (rp RizinPackage) sourcePath(baseArtifactsPath string) string {
 	return filepath.Join(rp.artifactsPath(baseArtifactsPath), rp.Source.Directory)
 }
 
-func (rp RizinPackage) buildMeson(baseArtifactsPath string, pluginsPath string) error {
-	srcPath := rp.sourcePath(baseArtifactsPath)
+func (rp RizinPackage) buildMeson(site Site) error {
+	srcPath := rp.sourcePath(site.GetArtifactsDir())
 	args := rp.Source.BuildArguments
-	args = append(args, fmt.Sprintf("-Drizin_plugdir=%s", pluginsPath))
+	args = append(args, fmt.Sprintf("--prefix=%s/.local", dir.HomeDir()))
+	if site.GetPkgConfigDir() != "" {
+		args = append(args, fmt.Sprintf("--pkg-config-path=%s", site.GetPkgConfigDir()))
+	}
+	if site.GetCMakeDir() != "" {
+		args = append(args, fmt.Sprintf("--cmake-prefix-path=%s", site.GetCMakeDir()))
+	}
 	args = append(args, "build")
 	cmd := exec.Command("meson", args...)
 	cmd.Dir = srcPath
@@ -152,8 +160,8 @@ func (rp RizinPackage) buildMeson(baseArtifactsPath string, pluginsPath string) 
 	return nil
 }
 
-func (rp RizinPackage) installMeson(baseArtifactsPath string, pluginsPath string) error {
-	srcPath := rp.sourcePath(baseArtifactsPath)
+func (rp RizinPackage) installMeson(site Site) error {
+	srcPath := rp.sourcePath(site.GetArtifactsDir())
 	cmd := exec.Command("meson", "install", "-C", "build")
 	cmd.Dir = srcPath
 	if err := cmd.Run(); err != nil {
@@ -162,10 +170,20 @@ func (rp RizinPackage) installMeson(baseArtifactsPath string, pluginsPath string
 	return nil
 }
 
+func (rp RizinPackage) uninstallMeson(site Site) error {
+	srcPath := rp.sourcePath(site.GetArtifactsDir())
+	cmd := exec.Command("ninja", "uninstall", "-C", "build")
+	cmd.Dir = srcPath
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Build a package if a source is provided
-func (rp RizinPackage) Build(baseArtifactsPath string, pluginsPath string) error {
+func (rp RizinPackage) Build(site Site) error {
 	if rp.Source.BuildSystem == "meson" {
-		return rp.buildMeson(baseArtifactsPath, pluginsPath)
+		return rp.buildMeson(site)
 	} else {
 		log.Printf("BuildSystem %s is not supported yet.", rp.Source.BuildSystem)
 		return fmt.Errorf("unsupported build system")
@@ -173,13 +191,22 @@ func (rp RizinPackage) Build(baseArtifactsPath string, pluginsPath string) error
 }
 
 // Install a package after building it
-func (rp RizinPackage) Install(baseArtifactsPath string, pluginsPath string) error {
+func (rp RizinPackage) Install(site Site) error {
 	if rp.Source.BuildSystem == "meson" {
-		err := rp.Build(baseArtifactsPath, pluginsPath)
+		err := rp.Build(site)
 		if err != nil {
 			return err
 		}
-		return rp.installMeson(baseArtifactsPath, pluginsPath)
+		return rp.installMeson(site)
+	} else {
+		log.Printf("BuildSystem %s is not supported yet.", rp.Source.BuildSystem)
+		return fmt.Errorf("unsupported build system")
+	}
+}
+
+func (rp RizinPackage) Uninstall(site Site) error {
+	if rp.Source.BuildSystem == "meson" {
+		return rp.uninstallMeson(site)
 	} else {
 		log.Printf("BuildSystem %s is not supported yet.", rp.Source.BuildSystem)
 		return fmt.Errorf("unsupported build system")
