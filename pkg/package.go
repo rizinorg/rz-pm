@@ -193,7 +193,12 @@ func (rp RizinPackage) Build(site Site) error {
 // Install a package after building it
 func (rp RizinPackage) Install(site Site) error {
 	if rp.Source.BuildSystem == "meson" {
-		err := rp.Build(site)
+		_, err := exec.LookPath("meson")
+		if err != nil {
+			return fmt.Errorf("make sure 'meson' is installed and in PATH")
+		}
+
+		err = rp.Build(site)
 		if err != nil {
 			return err
 		}
