@@ -18,14 +18,12 @@ tasks:
         cd ..
 
     - unit_tests: |
-        pwd
-        ls -lahR
-        go test ./...
+        cd rz-pm && go test ./...
     - build: |
-        go build
+        cd rz-pm && go build
     - list_jsdec: |
-        ./rz-pm list | grep -q 'Converts asm to pseudo-C code'
+        ./rz-pm/rz-pm list | grep -q 'Converts asm to pseudo-C code'
     - install_jsdec: |
-        ./rz-pm install jsdec
+        ./rz-pm/rz-pm install jsdec
     - check_jsdec: |
         ls $(rizin -H RZ_USER_PLUGINS) | grep core_pdd
