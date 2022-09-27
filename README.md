@@ -1,29 +1,28 @@
 # rz-pm: rizin package manager
 
-This tool is a cross platform package manager for the reverse engineering
-framework [rizin](https://github.com/rizinorg/rizin).
+This tool aims to be a cross platform package manager for the reverse engineering
+framework [Rizin](https://github.com/rizinorg/rizin).
 
-It is a rewrite in Go of the [original Shell rz-pm script](https://github.com/rizinorg/rizin/blob/master/binrz/rz-pm/rz-pm).
-
-This tool is still a work in progress.
+It is still a work in progress and currently it works on *NIX systems only. Any help is highly appreciating, starting from reporting bugs and feature requests to implementing code fixes.
 
 | CI | Badges/URL |
 |----------|---------------------------------------------------------------------|
-| **GithubCI**  | [![Tests Status](https://github.com/rizinorg/rz-pm/workflows/Go/badge.svg)](https://github.com/rizinorg/rz-pm/actions?query=workflow%3AGo)|
+| **GithubCI**  | [![Go](https://github.com/rizinorg/rz-pm/actions/workflows/go.yml/badge.svg)](https://github.com/rizinorg/rz-pm/actions/workflows/go.yml) |
+
+# Available packages
+The official database is available [here](https://github.com/rizinorg/rz-pm-db).
 
 ## Package example
 
-The official database is available [here](https://github.com/rizinorg/rz-pm-db).
-
 ```yaml
 name: jsdec
-type: git
-repo: https://github.com/rizinorg/jsdec
-desc: "[rz-native] converts asm to pseudo-C code."
-
-install:
-  - make -C p
-
-uninstall:
-  - make -C p uninstall
+version: 0.4.0
+description: Converts asm to pseudo-C code
+source:
+  url: https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz
+  hash: 5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d
+  directory: jsdec-0.4.0/p
+  build_system: meson
+  build_arguments:
+    - -Djsc_folder=..
 ```
