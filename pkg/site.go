@@ -129,7 +129,10 @@ func getPkgConfigPath() (string, error) {
 		return "", err
 	}
 	pkgConfigPath := filepath.Join(libPath, "pkgconfig")
-	if _, err := os.Stat(pkgConfigPath); os.IsNotExist(err) {
+	_, err = os.Stat(pkgConfigPath)
+	if os.IsNotExist(err) {
+		return "", nil
+	} else if err != nil {
 		return "", err
 	}
 	return pkgConfigPath, nil
@@ -141,7 +144,10 @@ func getCMakePath() (string, error) {
 		return "", err
 	}
 	cmakePath := filepath.Join(libPath, "cmake")
-	if _, err := os.Stat(cmakePath); os.IsNotExist(err) {
+	_, err = os.Stat(cmakePath)
+	if os.IsNotExist(err) {
+		return "", nil
+	} else if err != nil {
 		return "", err
 	}
 	return cmakePath, nil
