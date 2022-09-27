@@ -1,0 +1,51 @@
+name: Release
+on:
+  push:
+    tags:
+      - v[0-9].[0-9]+
+jobs:
+  build:
+    name: build-rz-pm
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        goos: [darwin, freebsd, openbsd, netbsd, linux]
+        goarch: [amd64, arm64]
+        include:
+          - goos: linux
+            goarch: ppc64le
+          - goos: linux
+            goarch: s390x
+
+    steps:
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.19
+        id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
+      - name: Build the Go binary
+        run: go build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: true
+          prerelease: false
+      - name: Upload artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./rz-pm
+          asset_name: rz-pm-${{ matrix.goos }}-${{ matrix.goarch }}
+          asset_content_type: application/octet-stream
