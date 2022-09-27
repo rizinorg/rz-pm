@@ -19,6 +19,7 @@ tasks:
 
     - unit_tests: |
         pwd
+        ls -lahR
         go test ./...
     - build: |
         go build
