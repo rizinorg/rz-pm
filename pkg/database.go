@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -34,6 +35,7 @@ func InitDatabase(path string) (Database, error) {
 func (d Database) updateDatabase() error {
 	repo, err := git.PlainOpen(d.Path)
 	if err == git.ErrRepositoryNotExists {
+		log.Printf("Downloading rz-pm-db repository...\n")
 		repo, err = git.PlainClone(d.Path, false, &git.CloneOptions{
 			URL: RZPM_DB_REPO_URL,
 		})
@@ -46,6 +48,7 @@ func (d Database) updateDatabase() error {
 	if err != nil {
 		return err
 	}
+	log.Printf("Updating rz-pm-db repository...\n")
 	err = w.Pull(&git.PullOptions{RemoteName: "origin"})
 	if err != git.NoErrAlreadyUpToDate {
 		return err

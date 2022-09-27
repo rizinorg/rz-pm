@@ -46,6 +46,7 @@ func (rp RizinPackage) Download(baseArtifactsPath string) error {
 		return err
 	}
 
+	fmt.Printf("Downloading %s source archive...\n", rp.Name)
 	client := http.Client{}
 	resp, err := client.Get(rp.Source.URL)
 	if err != nil {
@@ -73,6 +74,7 @@ func (rp RizinPackage) Download(baseArtifactsPath string) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("Verifying downloaded archive...\n")
 	computedHash := sha256.Sum256(content)
 	if hex.EncodeToString(computedHash[:]) != rp.Source.Hash {
 		return ErrRizinPackageWrongHash
@@ -88,6 +90,7 @@ func (rp RizinPackage) Download(baseArtifactsPath string) error {
 		defer fileReader.Close()
 	}
 
+	fmt.Printf("Extracting %s code...\n", rp.Name)
 	tarballReader := tar.NewReader(fileReader)
 	for {
 		header, err := tarballReader.Next()
@@ -124,6 +127,7 @@ func (rp RizinPackage) Download(baseArtifactsPath string) error {
 			writer.Close()
 		}
 	}
+	fmt.Printf("Source code for %s downloaded and extracted.\n", rp.Name)
 
 	return nil
 }
@@ -148,12 +152,16 @@ func (rp RizinPackage) buildMeson(site Site) error {
 	args = append(args, "build")
 	cmd := exec.Command("meson", args...)
 	cmd.Dir = srcPath
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 
 	cmd = exec.Command("meson", "compile", "-C", "build")
 	cmd.Dir = srcPath
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	if err := cmd.Run(); err != nil {
 		return err
 	}
@@ -164,6 +172,8 @@ func (rp RizinPackage) installMeson(site Site) error {
 	srcPath := rp.sourcePath(site.GetArtifactsDir())
 	cmd := exec.Command("meson", "install", "-C", "build")
 	cmd.Dir = srcPath
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	if err := cmd.Run(); err != nil {
 		return err
 	}
@@ -174,6 +184,8 @@ func (rp RizinPackage) uninstallMeson(site Site) error {
 	srcPath := rp.sourcePath(site.GetArtifactsDir())
 	cmd := exec.Command("ninja", "uninstall", "-C", "build")
 	cmd.Dir = srcPath
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	if err := cmd.Run(); err != nil {
 		return err
 	}
@@ -182,7 +194,13 @@ func (rp RizinPackage) uninstallMeson(site Site) error {
 
 // Build a package if a source is provided
 func (rp RizinPackage) Build(site Site) error {
+	fmt.Printf("Building %s...\n", rp.Name)
 	if rp.Source.BuildSystem == "meson" {
+		_, err := exec.LookPath("meson")
+		if err != nil {
+			return fmt.Errorf("make sure 'meson' is installed and in PATH")
+		}
+
 		return rp.buildMeson(site)
 	} else {
 		log.Printf("BuildSystem %s is not supported yet.", rp.Source.BuildSystem)
@@ -192,28 +210,37 @@ func (rp RizinPackage) Build(site Site) error {
 
 // Install a package after building it
 func (rp RizinPackage) Install(site Site) error {
-	if rp.Source.BuildSystem == "meson" {
-		_, err := exec.LookPath("meson")
-		if err != nil {
-			return fmt.Errorf("make sure 'meson' is installed and in PATH")
-		}
+	err := rp.Build(site)
+	if err != nil {
+		return err
+	}
 
-		err = rp.Build(site)
-		if err != nil {
-			return err
-		}
-		return rp.installMeson(site)
+	fmt.Printf("Installing %s...\n", rp.Name)
+	if rp.Source.BuildSystem == "meson" {
+		err = rp.installMeson(site)
 	} else {
 		log.Printf("BuildSystem %s is not supported yet.", rp.Source.BuildSystem)
-		return fmt.Errorf("unsupported build system")
+		err = fmt.Errorf("unsupported build system")
 	}
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Package %s built and installed.\n", rp.Name)
+	return nil
 }
 
 func (rp RizinPackage) Uninstall(site Site) error {
+	fmt.Printf("Uninstalling %s...\n", rp.Name)
+	var err error
 	if rp.Source.BuildSystem == "meson" {
-		return rp.uninstallMeson(site)
+		err = rp.uninstallMeson(site)
 	} else {
 		log.Printf("BuildSystem %s is not supported yet.", rp.Source.BuildSystem)
-		return fmt.Errorf("unsupported build system")
+		err = fmt.Errorf("unsupported build system")
 	}
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Package %s uninstalled.\n", rp.Name)
+	return nil
 }
