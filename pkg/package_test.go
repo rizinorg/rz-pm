@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -98,6 +99,7 @@ func (s FakeSite) Remove() error {
 }
 
 func TestInstallSimplePackage(t *testing.T) {
+	log.SetOutput(os.Stderr)
 	p := RizinPackage{
 		Name:        "simple",
 		Description: "simple description",
@@ -132,6 +134,7 @@ func TestInstallSimplePackage(t *testing.T) {
 }
 
 func TestUninstallSimplePackage(t *testing.T) {
+	log.SetOutput(os.Stderr)
 	p := RizinPackage{
 		Name:        "simple",
 		Description: "simple description",
