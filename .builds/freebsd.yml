@@ -3,6 +3,7 @@ packages:
     - lang/go
     - meson
     - ninja
+    - pkgconf
 environment:
     CC: clang
     HOST_CC: clang # Required to build Rizin
