@@ -56,7 +56,7 @@ func (d Database) updateDatabase() error {
 	return nil
 }
 
-func parsePackageFromFile(path string) (RizinPackage, error) {
+func parsePackageFromFile(path string) (Package, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return RizinPackage{}, err
@@ -68,20 +68,20 @@ func parsePackageFromFile(path string) (RizinPackage, error) {
 		return RizinPackage{}, err
 	}
 
-	if p.Name == "" || p.Version == "" || p.Source.URL == "" || p.Source.Hash == "" || p.Source.BuildSystem == "" {
+	if p.PackageName == "" || p.PackageVersion == "" || p.PackageSource.URL == "" || p.PackageSource.Hash == "" || p.PackageSource.BuildSystem == "" {
 		return RizinPackage{}, ErrRizinPackageWrongFormat
 	}
 	return p, nil
 }
 
-func (d Database) ListAvailablePackages() ([]RizinPackage, error) {
+func (d Database) ListAvailablePackages() ([]Package, error) {
 	dbPath := filepath.Join(d.Path, dbPath)
 	files, err := ioutil.ReadDir(dbPath)
 	if err != nil {
-		return []RizinPackage{}, err
+		return nil, err
 	}
 
-	packages := []RizinPackage{}
+	packages := []Package{}
 	for _, file := range files {
 		// skip directories
 		if file.IsDir() {
@@ -102,14 +102,14 @@ func (d Database) ListAvailablePackages() ([]RizinPackage, error) {
 	return packages, nil
 }
 
-func (d Database) GetPackage(name string) (RizinPackage, error) {
+func (d Database) GetPackage(name string) (Package, error) {
 	packages, err := d.ListAvailablePackages()
 	if err != nil {
 		return RizinPackage{}, err
 	}
 
 	for _, pkg := range packages {
-		if pkg.Name == name {
+		if pkg.Name() == name {
 			return pkg, nil
 		}
 	}

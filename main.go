@@ -21,6 +21,39 @@ func setDebug(value bool) {
 	}
 }
 
+func listPackages(c *cli.Context, installed bool) error {
+	site, err := pkg.InitSite(dir.SiteDir())
+	if err != nil {
+		return err
+	}
+	var packages []pkg.Package
+	if installed {
+		packages, err = site.ListInstalledPackages()
+	} else {
+		packages, err = site.ListAvailablePackages()
+	}
+	if err != nil {
+		return err
+	}
+
+	for _, pkg := range packages {
+		info := ""
+		if site.IsPackageInstalled(pkg) {
+			info = " [installed]"
+		}
+		fmt.Printf("%s: %s%s\n", pkg.Name(), pkg.Description(), info)
+	}
+	return nil
+}
+
+func listAvailablePackages(c *cli.Context) error {
+	return listPackages(c, false)
+}
+
+func listInstalledPackages(c *cli.Context) error {
+	return listPackages(c, true)
+}
+
 func main() {
 	const flagNameDebug = "debug"
 
@@ -86,20 +119,18 @@ func main() {
 			Name:    "list",
 			Aliases: []string{"ls"},
 			Usage:   "list packages",
-			Action: func(c *cli.Context) error {
-				site, err := pkg.InitSite(dir.SiteDir())
-				if err != nil {
-					return err
-				}
-				packages, err := site.ListAvailablePackages()
-				if err != nil {
-					return err
-				}
-
-				for _, pkg := range packages {
-					fmt.Printf("%s: %s\n", pkg.Name, pkg.Description)
-				}
-				return nil
+			Action:  listAvailablePackages,
+			Subcommands: []*cli.Command{
+				{
+					Name:   "available",
+					Usage:  "list all available packages",
+					Action: listAvailablePackages,
+				},
+				{
+					Name:   "installed",
+					Usage:  "list installed packages",
+					Action: listInstalledPackages,
+				},
 			},
 		},
 		{
