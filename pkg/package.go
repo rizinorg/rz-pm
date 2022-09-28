@@ -228,6 +228,14 @@ func (rp RizinPackage) Build(site Site) error {
 			return fmt.Errorf("make sure 'meson' is installed and in PATH")
 		}
 
+		_, err = exec.LookPath("pkg-config")
+		if err != nil {
+			_, err = exec.LookPath("cmake")
+			if err != nil {
+				return fmt.Errorf("make sure either 'cmake' or `pkg-config` are installed and in PATH")
+			}
+		}
+
 		return rp.buildMeson(site)
 	} else {
 		log.Printf("BuildSystem %s is not supported yet.", rp.PackageSource.BuildSystem)
