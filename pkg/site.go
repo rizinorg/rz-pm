@@ -24,7 +24,6 @@ type Site interface {
 	GetCMakeDir() string
 	InstallPackage(pkg Package) error
 	UninstallPackage(pkg Package) error
-	DownloadPackage(pkg Package) error
 	Remove() error
 }
 
@@ -155,10 +154,6 @@ func (s *RizinSite) UninstallPackage(pkg Package) error {
 	s.installedPackagesNames = removeStringFromSlice(s.installedPackagesNames, pkg.Name())
 	installedFilePath := filepath.Join(s.Path, installedFile)
 	return updateInstalledPackageNames(installedFilePath, s.installedPackagesNames)
-}
-
-func (s *RizinSite) DownloadPackage(pkg Package) error {
-	return pkg.Download(filepath.Join(s.Path, artifactsDir))
 }
 
 func (s *RizinSite) Remove() error {

@@ -221,6 +221,11 @@ func (rp RizinPackage) uninstallMeson(site Site) error {
 
 // Build a package if a source is provided
 func (rp RizinPackage) Build(site Site) error {
+	srcPath := rp.sourcePath(site.GetArtifactsDir())
+	if fi, err := os.Stat(srcPath); err != nil || !fi.IsDir() {
+		rp.Download(site.GetArtifactsDir())
+	}
+
 	fmt.Printf("Building %s...\n", rp.PackageName)
 	if rp.PackageSource.BuildSystem == "meson" {
 		_, err := exec.LookPath("meson")

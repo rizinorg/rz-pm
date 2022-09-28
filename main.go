@@ -103,11 +103,6 @@ func main() {
 					return err
 				}
 
-				err = site.DownloadPackage(pkg)
-				if err != nil {
-					return err
-				}
-
 				err = site.InstallPackage(pkg)
 				if err != nil {
 					return err

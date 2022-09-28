@@ -97,9 +97,6 @@ func (s FakeSite) InstallPackage(pkg Package) error {
 func (s FakeSite) UninstallPackage(pkg Package) error {
 	return nil
 }
-func (s FakeSite) DownloadPackage(pkg Package) error {
-	return nil
-}
 func (s FakeSite) Remove() error {
 	return nil
 }
