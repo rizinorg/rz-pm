@@ -161,6 +161,9 @@ func (s *RizinSite) Remove() error {
 }
 
 func getRizinLibPath() (string, error) {
+	if _, err := exec.LookPath("rizin"); err != nil {
+		return "", fmt.Errorf("rizin does not seem to be installed on your system. Make sure it is installed and in PATH")
+	}
 	cmd := exec.Command("rizin", "-H", "RZ_LIBDIR")
 	out, err := cmd.Output()
 	if err != nil {
