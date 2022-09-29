@@ -57,6 +57,12 @@ func listInstalledPackages(c *cli.Context) error {
 func main() {
 	const flagNameDebug = "debug"
 
+	cli.VersionFlag = &cli.BoolFlag{
+		Name:    "print-version",
+		Aliases: []string{"V"},
+		Usage:   "print only the version",
+	}
+
 	app := cli.NewApp()
 	app.Name = "rz-pm"
 	app.Usage = "rizin package manager"
