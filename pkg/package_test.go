@@ -86,7 +86,7 @@ func (s FakeSite) GetArtifactsDir() string {
 	return s.ArtifactsDir
 }
 func (s FakeSite) GetPkgConfigDir() string {
-	return ""
+	return "pkg-config-dir"
 }
 func (s FakeSite) GetCMakeDir() string {
 	return ""

@@ -229,6 +229,10 @@ func buildErrorMsg(msg string) string {
 
 // Build a package if a source is provided
 func (rp RizinPackage) Build(site Site) error {
+	if site.GetPkgConfigDir() == "" && site.GetCMakeDir() == "" {
+		return fmt.Errorf("make sure rizin development files are installed (e.g. librizin-dev, rizin-devel, etc.)")
+	}
+
 	srcPath := rp.sourcePath(site.GetArtifactsDir())
 	if fi, err := os.Stat(srcPath); err != nil || !fi.IsDir() {
 		rp.Download(site.GetArtifactsDir())
