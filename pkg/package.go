@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/rizinorg/rz-pm/internal/util/dir"
@@ -219,6 +220,13 @@ func (rp RizinPackage) uninstallMeson(site Site) error {
 	return nil
 }
 
+func buildErrorMsg(msg string) string {
+	if runtime.GOOS == "windows" {
+		return "To build Rizin packages on Windows you need to enable the 'Developer Command Prompt for Visual Studio'. Follow the instructions at https://learn.microsoft.com/en-us/visualstudio/ide/reference/command-prompt-powershell?view=vs-2022 to install and execute it. Moreover " + msg
+	}
+	return msg
+}
+
 // Build a package if a source is provided
 func (rp RizinPackage) Build(site Site) error {
 	srcPath := rp.sourcePath(site.GetArtifactsDir())
@@ -230,14 +238,14 @@ func (rp RizinPackage) Build(site Site) error {
 	if rp.PackageSource.BuildSystem == "meson" {
 		_, err := exec.LookPath("meson")
 		if err != nil {
-			return fmt.Errorf("make sure 'meson' is installed and in PATH")
+			return fmt.Errorf(buildErrorMsg("make sure 'meson' is installed and in PATH"))
 		}
 
 		_, err = exec.LookPath("pkg-config")
 		if err != nil {
 			_, err = exec.LookPath("cmake")
 			if err != nil {
-				return fmt.Errorf("make sure either 'cmake' or `pkg-config` are installed and in PATH")
+				return fmt.Errorf(buildErrorMsg("make sure either 'cmake' or `pkg-config` are installed and in PATH"))
 			}
 		}
 
