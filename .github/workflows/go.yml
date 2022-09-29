@@ -12,25 +12,23 @@ jobs:
     strategy:
       matrix:
         name:
-          - macos-clang
-          - ubuntu-clang
-          # - windows-gcc
+          - macos
+          - ubuntu
+          - windows
         include:
-          - name: macos-clang
+          - name: macos
             os: macos-latest
-            cc: clang
             prefix: /usr/local
             sudo: sudo
-          - name: ubuntu-clang
+          - name: ubuntu
             os: ubuntu-22.04
-            cc: clang
             prefix: /usr
             sudo: sudo
-          # - name: windows-gcc
-          #   os: windows-latest
-          #   cc: gcc
-          #   prefix: C:\
-          #   sudo: ''
+          - name: windows
+            os: windows-latest
+            prefix: D:\
+            sudo: ''
+            meson_options: -Dportable=true -Db_vscrt=static_from_buildtype
 
     steps:
       - name: Install python
@@ -44,14 +42,20 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install meson ninja
       - uses: actions/checkout@v2
+      - uses: seanmiddleditch/gha-setup-vsdevenv@master
+        if: matrix.os == 'windows-latest'
       - name: Install Rizin
         run: |
-            git clone --depth=1 https://github.com/rizinorg/rizin
-            cd rizin
-            meson --buildtype=release --prefix=${{ matrix.prefix }} build
-            ninja -C build
-            ${{ matrix.sudo }} ninja -C build install
-            cd ..
+          git clone --depth=1 https://github.com/rizinorg/rizin
+          cd rizin
+          meson --buildtype=release --prefix=${{ matrix.prefix }} ${{ matrix.meson_options }} build
+          meson compile -C build
+          ${{ matrix.sudo }} meson install -C build
+          cd ..
+      - name: Add rizin dir to PATH
+        if: matrix.os == 'windows-latest'
+        run: |
+          Add-Content $env:GITHUB_PATH "D:\bin"
 
       - name: Set up Go 1.19
         uses: actions/setup-go@v1
