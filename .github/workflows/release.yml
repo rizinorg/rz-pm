@@ -27,7 +27,7 @@ jobs:
     needs: create_release
     strategy:
       matrix:
-        goos: [darwin, freebsd, openbsd, netbsd, linux]
+        goos: [windows, darwin, freebsd, openbsd, netbsd, linux]
         goarch: [amd64, arm64]
         include:
           - goos: linux
