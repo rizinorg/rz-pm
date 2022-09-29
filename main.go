@@ -22,6 +22,11 @@ func setDebug(value bool) {
 }
 
 func listPackages(c *cli.Context, installed bool) error {
+	if c.Args().Len() != 0 {
+		cli.ShowCommandHelp(c, "list")
+		return fmt.Errorf("wrong usage of list command")
+	}
+
 	site, err := pkg.InitSite(dir.SiteDir())
 	if err != nil {
 		return err
@@ -94,7 +99,7 @@ func main() {
 			},
 			Action: func(c *cli.Context) error {
 				packageName := c.Args().First()
-				if packageName == "" {
+				if packageName == "" || c.Args().Len() != 1 {
 					cli.ShowCommandHelp(c, "install")
 					return fmt.Errorf("wrong usage of install command")
 				}
@@ -140,9 +145,9 @@ func main() {
 			ArgsUsage: "PACKAGE",
 			Action: func(c *cli.Context) error {
 				packageName := c.Args().First()
-				if packageName == "" {
-					cli.ShowCommandHelp(c, "install")
-					return fmt.Errorf("wrong usage of install command")
+				if packageName == "" || c.Args().Len() != 1 {
+					cli.ShowCommandHelp(c, "uninstall")
+					return fmt.Errorf("wrong usage of uninstall command")
 				}
 
 				site, err := pkg.InitSite(dir.SiteDir())
