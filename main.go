@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/rizinorg/rz-pm/internal/util/dir"
 	"github.com/rizinorg/rz-pm/pkg"
 	"github.com/urfave/cli/v2"
 )
@@ -27,7 +26,7 @@ func listPackages(c *cli.Context, installed bool) error {
 		return fmt.Errorf("wrong usage of list command")
 	}
 
-	site, err := pkg.InitSite(dir.SiteDir())
+	site, err := pkg.InitSite(pkg.SiteDir())
 	if err != nil {
 		return err
 	}
@@ -104,7 +103,7 @@ func main() {
 					return fmt.Errorf("wrong usage of install command")
 				}
 
-				site, err := pkg.InitSite(dir.SiteDir())
+				site, err := pkg.InitSite(pkg.SiteDir())
 				if err != nil {
 					return err
 				}
@@ -150,7 +149,7 @@ func main() {
 					return fmt.Errorf("wrong usage of uninstall command")
 				}
 
-				site, err := pkg.InitSite(dir.SiteDir())
+				site, err := pkg.InitSite(pkg.SiteDir())
 				if err != nil {
 					return err
 				}

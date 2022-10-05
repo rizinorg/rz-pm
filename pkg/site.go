@@ -9,7 +9,21 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/adrg/xdg"
 )
+
+const (
+	SiteDirEnvVar = "RZPM_SITEDIR"
+)
+
+func SiteDir() string {
+	if envVar := os.Getenv(SiteDirEnvVar); envVar != "" {
+		return envVar
+	}
+
+	return filepath.Join(xdg.DataHome, "rz-pm", "site")
+}
 
 const RZPM_DB_REPO_URL = "https://github.com/rizinorg/rz-pm-db"
 

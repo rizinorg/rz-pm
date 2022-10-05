@@ -3,6 +3,7 @@ module github.com/rizinorg/rz-pm
 go 1.15
 
 require (
+	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/go-git/go-git/v5 v5.4.2 // indirect
 	github.com/golang/mock v1.4.4
 	github.com/google/go-cmp v0.5.2

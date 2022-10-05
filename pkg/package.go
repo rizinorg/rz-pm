@@ -15,7 +15,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/rizinorg/rz-pm/internal/util/dir"
+	"github.com/adrg/xdg"
 )
 
 type BuildSystem string
@@ -170,7 +170,7 @@ func (rp RizinPackage) sourcePath(baseArtifactsPath string) string {
 func (rp RizinPackage) buildMeson(site Site) error {
 	srcPath := rp.sourcePath(site.GetArtifactsDir())
 	args := rp.PackageSource.BuildArguments
-	args = append(args, fmt.Sprintf("--prefix=%s/.local", dir.HomeDir()))
+	args = append(args, fmt.Sprintf("--prefix=%s/.local", xdg.Home))
 	if site.GetPkgConfigDir() != "" {
 		args = append(args, fmt.Sprintf("--pkg-config-path=%s", site.GetPkgConfigDir()))
 	}
