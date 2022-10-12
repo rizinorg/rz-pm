@@ -21,17 +21,17 @@ func containsPackage(packages []Package, name string) bool {
 
 func TestEmptySite(t *testing.T) {
 	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
-	require.Nil(t, err, "temp path should be created")
+	require.NoError(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
 	site, err := InitSite(tmpPath)
-	require.Nil(t, err, "site should be initialized in tmpPath")
+	require.NoError(t, err, "site should be initialized in tmpPath")
 	assert.Equal(t, tmpPath, site.GetBaseDir(), "site path should be tmpPath")
 	_, err = os.Stat(filepath.Join(tmpPath, "rz-pm-db"))
-	assert.Nil(t, err, "rz-pm database directory should be there")
+	assert.NoError(t, err, "rz-pm database directory should be there")
 	_, err = os.Stat(filepath.Join(tmpPath, "rz-pm-db", "README.md"))
-	assert.Nil(t, err, "rz-pm-db repository should be downloaded")
+	assert.NoError(t, err, "rz-pm-db repository should be downloaded")
 	_, err = os.Stat(filepath.Join(tmpPath, "rz-pm-db", "db"))
-	assert.Nil(t, err, "rz-pm-db repository should be downloaded 2")
+	assert.NoError(t, err, "rz-pm-db repository should be downloaded 2")
 }
 
 func TestExistingSite(t *testing.T) {
