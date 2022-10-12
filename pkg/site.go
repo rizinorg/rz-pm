@@ -218,10 +218,13 @@ func getCMakePath() (string, error) {
 }
 
 func getInstalledPackageNames(path string) ([]string, error) {
-	by, err := ioutil.ReadFile(path)
+	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		return []string{}, nil
-	} else if err != nil {
+	}
+
+	by, err := ioutil.ReadFile(path)
+	if err != nil {
 		return []string{}, err
 	}
 
