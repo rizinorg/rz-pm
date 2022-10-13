@@ -184,7 +184,7 @@ func getRizinLibPath() (string, error) {
 		return "", err
 	}
 
-	return strings.TrimSuffix(string(out), "\n"), nil
+	return strings.TrimRight(string(out), "\r\n"), nil
 }
 
 func getPkgConfigPath() (string, error) {
