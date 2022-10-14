@@ -132,8 +132,10 @@ func TestInstallSimplePackage(t *testing.T) {
 	assert.NoError(t, err, "The plugin should be built and installed without errors")
 	files, err := ioutil.ReadDir(pluginsPath)
 	require.NoError(t, err, "pluginsPath should be read")
-	require.Len(t, files, 1, "there should be one plugin installed")
-	assert.Contains(t, files[0].Name(), "core_pdd", "the name of the plugin lib is jsdec")
+	require.True(t, len(files) >= 1, "there should be one plugin installed")
+	for i := range files {
+		assert.Contains(t, files[i].Name(), "core_pdd", "the name of the plugin lib is jsdec")
+	}
 }
 
 func TestUninstallSimplePackage(t *testing.T) {
