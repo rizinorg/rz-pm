@@ -49,11 +49,22 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
       - name: Upload artifact
+        if: matrix.os != 'windows-latest'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create_release.outputs.upload_url }}
           asset_path: ./rz-pm
+          asset_name: rz-pm-${{ matrix.goos }}-${{ matrix.goarch }}
+          asset_content_type: application/octet-stream
+      - name: Upload artifact (windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ./rz-pm.exe
           asset_name: rz-pm-${{ matrix.goos }}-${{ matrix.goarch }}
           asset_content_type: application/octet-stream
