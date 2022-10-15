@@ -70,7 +70,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "rz-pm"
 	app.Usage = "rizin package manager"
-	app.Version = "0.1.5"
+	app.Version = "0.1.6"
 
 	app.Flags = []cli.Flag{
 		&cli.BoolFlag{
