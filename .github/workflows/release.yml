@@ -43,6 +43,9 @@ jobs:
         id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@v1
+      - name: Check version matches
+        run: |
+          [[ "v$(grep app.Version main.go | gsed -r 's/.*\"([0-9\.]+)\"/\1/')" =~ "v${{ github.ref }}" ]]
       - name: Build the Go binary
         run: go build
         env:
