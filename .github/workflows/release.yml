@@ -10,6 +10,10 @@ jobs:
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
+      - uses: actions/checkout@v2
+      - name: Check version matches
+        run: |
+          [[ "v$(grep app.Version main.go | sed -r 's/.*\"([0-9\.]+)\"/\1/')" =~ "v${{ github.ref }}" ]]
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -43,9 +47,6 @@ jobs:
         id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@v1
-      - name: Check version matches
-        run: |
-          [[ "v$(grep app.Version main.go | sed -r 's/.*\"([0-9\.]+)\"/\1/')" =~ "v${{ github.ref }}" ]]
       - name: Build the Go binary
         run: go build
         env:
