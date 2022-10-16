@@ -101,18 +101,28 @@ func getRzPmName() string {
 	return name
 }
 
-func upgradeRzPm(c *cli.Context) error {
+func checkUpgrade(c *cli.Context) (bool, *version.Version, *version.Version, error) {
 	new_version, err := getNewRzPmVersion()
 	if err != nil {
-		return err
+		return false, nil, nil, err
 	}
 
 	current_version, err := version.NewVersion(c.App.Version)
 	if err != nil {
-		return err
+		return false, nil, nil, err
 	}
 
 	if new_version.LessThanOrEqual(current_version) {
+		return false, nil, nil, nil
+	}
+	return true, current_version, new_version, nil
+}
+
+func upgradeRzPm(c *cli.Context) error {
+	needsUpgrade, current_version, new_version, err := checkUpgrade(c)
+	if err != nil {
+		return nil
+	} else if !needsUpgrade {
 		fmt.Printf("You are already on the latest rz-pm version!\n")
 		return nil
 	}
@@ -139,6 +149,7 @@ func upgradeRzPm(c *cli.Context) error {
 
 func main() {
 	const flagNameDebug = "debug"
+	const flagSkipUpgrade = "skip-upgrade"
 
 	cli.VersionFlag = &cli.BoolFlag{
 		Name:    "print-version",
@@ -157,10 +168,30 @@ func main() {
 			Usage:   "enable debug logs",
 			EnvVars: []string{debugEnvVar},
 		},
+		&cli.BoolFlag{
+			Name:  flagSkipUpgrade,
+			Usage: "skip auto-upgrade on start",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
 		setDebug(c.Bool(flagNameDebug))
+
+		if !c.Bool(flagSkipUpgrade) && c.Args().First() != "upgrade" {
+			needsUpgrade, current_version, new_version, err := checkUpgrade(c)
+			if err != nil {
+				return nil
+			} else if !needsUpgrade {
+				return nil
+			}
+
+			fmt.Println("Your version of rz-pm is not the latest one.")
+			fmt.Printf("Currently installed version: %s, available version: %s\n", current_version, new_version)
+			fmt.Println()
+			fmt.Println("Run the 'upgrade' command to upgrade rz-pm or use the '--skip-upgrade' flag.")
+			os.Exit(0)
+		}
+
 		return nil
 	}
 
