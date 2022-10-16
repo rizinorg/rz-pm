@@ -95,6 +95,9 @@ func getRzPmName() string {
 	} else {
 		name += runtime.GOARCH
 	}
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
 	return name
 }
 
