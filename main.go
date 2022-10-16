@@ -2,10 +2,16 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 
+	"github.com/hashicorp/go-version"
 	"github.com/rizinorg/rz-pm/pkg"
 	"github.com/urfave/cli/v2"
 )
@@ -58,6 +64,112 @@ func listInstalledPackages(c *cli.Context) error {
 	return listPackages(c, true)
 }
 
+func getNewRzPmVersion() (*version.Version, error) {
+	client := http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	resp, err := client.Get("https://github.com/rizinorg/rz-pm/releases/latest")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 302 {
+		return nil, fmt.Errorf("expected a redirection when querying releases/latest URL")
+	}
+	redirect_url, err := resp.Location()
+	if err != nil {
+		return nil, err
+	}
+	redirect_url_parts := strings.Split(redirect_url.Path, "/")
+	new_version_str := redirect_url_parts[len(redirect_url_parts)-1]
+
+	return version.NewVersion(new_version_str)
+}
+
+func getRzPmName() string {
+	name := "rz-pm-" + runtime.GOOS + "-"
+	if runtime.GOARCH == "amd64" {
+		name += "x86_64"
+	} else {
+		name += runtime.GOARCH
+	}
+	return name
+}
+
+func upgradeRzPm(c *cli.Context) error {
+	new_version, err := getNewRzPmVersion()
+	if err != nil {
+		return err
+	}
+
+	current_version, err := version.NewVersion(c.App.Version)
+	if err != nil {
+		return err
+	}
+
+	if new_version.LessThanOrEqual(current_version) {
+		fmt.Printf("You are already on the latest rz-pm version!\n")
+		return nil
+	}
+
+	fmt.Println("Your version of rz-pm is not the latest one.")
+	fmt.Printf("Currently installed version: %s, available version: %s\n", current_version, new_version)
+
+	fmt.Println("Downloading the new version...")
+	client := http.Client{}
+	rz_pm_name := getRzPmName()
+	resp, err := client.Get("https://github.com/rizinorg/rz-pm/releases/latest/download/" + rz_pm_name)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	new_exec, err := os.CreateTemp("", "")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(new_exec.Name())
+
+	_, err = io.Copy(new_exec, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	exc, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	current_exec, err := filepath.EvalSymlinks(exc)
+	if err != nil {
+		return err
+	}
+
+	current_exec_bak := current_exec + ".bak"
+	fmt.Printf("Saving existing rz-pm executable to %s...\n", current_exec_bak)
+	err = os.Rename(current_exec, current_exec_bak)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Replacing existing binary with new version...")
+	err = os.Rename(new_exec.Name(), current_exec)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Making new version executable...")
+	err = os.Chmod(current_exec, 0755)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Upgrade of rz-pm was successful!")
+	return nil
+}
+
 func main() {
 	const flagNameDebug = "debug"
 
@@ -70,7 +182,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "rz-pm"
 	app.Usage = "rizin package manager"
-	app.Version = "0.1.7"
+	app.Version = "v0.1.4"
 
 	app.Flags = []cli.Flag{
 		&cli.BoolFlag{
@@ -165,6 +277,11 @@ func main() {
 				}
 				return nil
 			},
+		},
+		{
+			Name:   "upgrade",
+			Usage:  "upgrade rz-pm",
+			Action: upgradeRzPm,
 		},
 	}
 

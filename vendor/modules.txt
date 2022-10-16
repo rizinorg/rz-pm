@@ -95,6 +95,9 @@ github.com/go-git/go-git/v5/utils/merkletrie/noder
 ## explicit
 # github.com/google/go-cmp v0.5.2
 ## explicit
+# github.com/hashicorp/go-version v1.6.0
+## explicit
+github.com/hashicorp/go-version
 # github.com/imdario/mergo v0.3.12
 github.com/imdario/mergo
 # github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99

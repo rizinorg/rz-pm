@@ -7,6 +7,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2 // indirect
 	github.com/golang/mock v1.4.4
 	github.com/google/go-cmp v0.5.2
+	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/stretchr/testify v1.8.0 // indirect
 	github.com/urfave/cli/v2 v2.2.0
 	gopkg.in/yaml.v2 v2.3.0
