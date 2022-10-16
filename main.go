@@ -2,16 +2,15 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 
 	"github.com/hashicorp/go-version"
+	"github.com/inconshreveable/go-update"
 	"github.com/rizinorg/rz-pm/pkg"
 	"github.com/urfave/cli/v2"
 )
@@ -127,46 +126,11 @@ func upgradeRzPm(c *cli.Context) error {
 	}
 	defer resp.Body.Close()
 
-	new_exec, err := os.CreateTemp("", "")
+	err = update.Apply(resp.Body, update.Options{})
 	if err != nil {
 		return err
 	}
-	defer os.Remove(new_exec.Name())
-
-	_, err = io.Copy(new_exec, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	exc, err := os.Executable()
-	if err != nil {
-		return err
-	}
-	current_exec, err := filepath.EvalSymlinks(exc)
-	if err != nil {
-		return err
-	}
-
-	current_exec_bak := current_exec + ".bak"
-	fmt.Printf("Saving existing rz-pm executable to %s...\n", current_exec_bak)
-	err = os.Rename(current_exec, current_exec_bak)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Replacing existing binary with new version...")
-	err = os.Rename(new_exec.Name(), current_exec)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Making new version executable...")
-	err = os.Chmod(current_exec, 0755)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Upgrade of rz-pm was successful!")
+	fmt.Printf("Upgrade to rz-pm version %s was successful!\n", new_version)
 	return nil
 }
 
