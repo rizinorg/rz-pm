@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/hashicorp/go-version"
 	"github.com/inconshreveable/go-update"
 	"github.com/rizinorg/rz-pm/pkg"
@@ -48,7 +49,8 @@ func listPackages(c *cli.Context, installed bool) error {
 	for _, pkg := range packages {
 		info := ""
 		if site.IsPackageInstalled(pkg) {
-			info = " [installed]"
+			green := color.New(color.Bold, color.FgGreen).SprintFunc()
+			info = green(" [installed]")
 		}
 		fmt.Printf("%s: %s%s\n", pkg.Name(), pkg.Description(), info)
 	}
