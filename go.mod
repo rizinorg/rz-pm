@@ -1,6 +1,6 @@
 module github.com/rizinorg/rz-pm
 
-go 1.15
+go 1.17
 
 require (
 	github.com/Microsoft/go-winio v0.6.0 // indirect
