@@ -33,15 +33,17 @@ type RizinPackageSource struct {
 }
 
 type RizinPackage struct {
-	PackageName        string             `yaml:"name"`
-	PackageVersion     string             `yaml:"version"`
-	PackageDescription string             `yaml:"description"`
-	PackageSource      RizinPackageSource `yaml:"source"`
+	PackageName        string              `yaml:"name"`
+	PackageVersion     string              `yaml:"version"`
+	PackageSummary     string              `yaml:"summary"`
+	PackageDescription string              `yaml:"description"`
+	PackageSource      *RizinPackageSource `yaml:"source"`
 }
 
 type Package interface {
 	Name() string
 	Version() string
+	Summary() string
 	Description() string
 	Source() RizinPackageSource
 	Download(baseArtifactsPath string) error
@@ -62,8 +64,12 @@ func (rp RizinPackage) Description() string {
 	return rp.PackageDescription
 }
 
+func (rp RizinPackage) Summary() string {
+	return rp.PackageSummary
+}
+
 func (rp RizinPackage) Source() RizinPackageSource {
-	return rp.PackageSource
+	return *rp.PackageSource
 }
 
 // Download the source code of a package and extract it in the provided path
@@ -86,7 +92,7 @@ func (rp RizinPackage) Download(baseArtifactsPath string) error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(tarballFile.Name())
+	// defer os.Remove(tarballFile.Name())
 
 	_, err = io.Copy(tarballFile, resp.Body)
 	if err != nil {

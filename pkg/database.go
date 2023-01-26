@@ -68,8 +68,13 @@ func parsePackageFromFile(path string) (Package, error) {
 		return RizinPackage{}, err
 	}
 
-	if p.PackageName == "" || p.PackageVersion == "" || p.PackageSource.URL == "" || p.PackageSource.Hash == "" || p.PackageSource.BuildSystem == "" {
+	if p.PackageName == "" || p.PackageVersion == "" || p.PackageSummary == "" {
 		return RizinPackage{}, ErrRizinPackageWrongFormat
+	}
+	if p.PackageSource != nil {
+		if p.PackageSource.URL == "" || p.PackageSource.Hash == "" || p.PackageSource.BuildSystem == "" {
+			return RizinPackage{}, ErrRizinPackageWrongFormat
+		}
 	}
 	return p, nil
 }
@@ -92,7 +97,7 @@ func (d Database) ListAvailablePackages() ([]Package, error) {
 
 		p, err := parsePackageFromFile(name)
 		if err != nil {
-			fmt.Printf("Warning: could not read %s: %v", name, err)
+			fmt.Printf("Warning: could not read %s: %v\n", name, err)
 			continue
 		}
 

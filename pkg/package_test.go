@@ -16,7 +16,7 @@ func TestDownloadSimplePackage(t *testing.T) {
 		PackageName:        "simple",
 		PackageDescription: "simple description",
 		PackageVersion:     "0.0.1",
-		PackageSource: RizinPackageSource{
+		PackageSource: &RizinPackageSource{
 			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz",
 			Hash:           "5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d",
 			BuildSystem:    "meson",
@@ -42,7 +42,7 @@ func TestWrongHash(t *testing.T) {
 		PackageName:        "simple",
 		PackageDescription: "simple description",
 		PackageVersion:     "0.0.1",
-		PackageSource: RizinPackageSource{
+		PackageSource: &RizinPackageSource{
 			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz",
 			Hash:           "sha256:6afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d",
 			BuildSystem:    "meson",
@@ -107,7 +107,7 @@ func TestInstallSimplePackage(t *testing.T) {
 		PackageName:        "simple",
 		PackageDescription: "simple description",
 		PackageVersion:     "0.0.1",
-		PackageSource: RizinPackageSource{
+		PackageSource: &RizinPackageSource{
 			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz",
 			Hash:           "5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d",
 			BuildSystem:    "meson",
@@ -144,7 +144,7 @@ func TestUninstallSimplePackage(t *testing.T) {
 		PackageName:        "simple",
 		PackageDescription: "simple description",
 		PackageVersion:     "0.0.1",
-		PackageSource: RizinPackageSource{
+		PackageSource: &RizinPackageSource{
 			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz",
 			Hash:           "5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d",
 			BuildSystem:    "meson",

@@ -23,7 +23,8 @@ The official database is available [here](https://github.com/rizinorg/rz-pm-db).
 ```yaml
 name: jsdec
 version: 0.4.0
-description: Converts asm to pseudo-C code
+summary: Converts asm to pseudo-C code
+description: Longer description of the jsdec package
 source:
   url: https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz
   hash: 5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d

@@ -52,7 +52,7 @@ func listPackages(c *cli.Context, installed bool) error {
 			green := color.New(color.Bold, color.FgGreen).SprintFunc()
 			info = green(" [installed]")
 		}
-		fmt.Printf("%s: %s%s\n", pkg.Name(), pkg.Description(), info)
+		fmt.Printf("%s: %s%s\n", pkg.Name(), pkg.Summary(), info)
 	}
 	return nil
 }
@@ -63,6 +63,38 @@ func listAvailablePackages(c *cli.Context) error {
 
 func listInstalledPackages(c *cli.Context) error {
 	return listPackages(c, true)
+}
+
+func infoPackage(c *cli.Context) error {
+	packageName := c.Args().First()
+	if packageName == "" || c.Args().Len() != 1 {
+		cli.ShowCommandHelp(c, "info")
+		return fmt.Errorf("wrong usage of info command")
+	}
+
+	site, err := pkg.InitSite(pkg.SiteDir())
+	if err != nil {
+		return err
+	}
+
+	pkg, err := site.GetPackage(packageName)
+	if err != nil {
+		return err
+	}
+
+	var isInstalled string
+	if site.IsPackageInstalled(pkg) {
+		isInstalled = "yes"
+	} else {
+		isInstalled = "no"
+	}
+
+	fmt.Printf("Name: %s\n", pkg.Name())
+	fmt.Printf("Version: %s\n", pkg.Version())
+	fmt.Printf("Summary: %s\n", pkg.Summary())
+	fmt.Printf("Description: %s\n", pkg.Description())
+	fmt.Printf("Installed: %s\n", isInstalled)
+	return nil
 }
 
 func getNewRzPmVersion() (*version.Version, error) {
@@ -162,7 +194,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "rz-pm"
 	app.Usage = "rizin package manager"
-	app.Version = "v0.1.8"
+	app.Version = "v0.1.9"
 
 	app.Flags = []cli.Flag{
 		&cli.BoolFlag{
@@ -202,12 +234,6 @@ func main() {
 			Name:      "install",
 			Usage:     "install a package",
 			ArgsUsage: "[package-name]",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:  "f",
-					Usage: "install a package described by a local file",
-				},
-			},
 			Action: func(c *cli.Context) error {
 				packageName := c.Args().First()
 				if packageName == "" || c.Args().Len() != 1 {
@@ -277,6 +303,11 @@ func main() {
 				}
 				return nil
 			},
+		},
+		{
+			Name:   "info",
+			Usage:  "info about a package",
+			Action: infoPackage,
 		},
 		{
 			Name:   "upgrade",

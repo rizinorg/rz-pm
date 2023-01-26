@@ -68,7 +68,7 @@ func TestGoodPackageFormat(t *testing.T) {
 
 	tmpFile.WriteString(`name: simple
 version: 0.0.1
-description: simple description
+summary: simple description
 source:
   url: https://github.com/rizinorg/jsdec
   hash: 5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d
@@ -82,7 +82,7 @@ source:
 	require.NoError(t, err, "no errors in parsing the above package file")
 	assert.Equal(t, "simple", pkg.Name())
 	assert.Equal(t, "0.0.1", pkg.Version())
-	assert.Equal(t, "simple description", pkg.Description())
+	assert.Equal(t, "simple description", pkg.Summary())
 	assert.Equal(t, "https://github.com/rizinorg/jsdec", pkg.Source().URL)
 	assert.Equal(t, "5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d", pkg.Source().Hash)
 	assert.Equal(t, Meson, pkg.Source().BuildSystem)
@@ -96,7 +96,7 @@ func TestWrongPackageFormat(t *testing.T) {
 	defer tmpFile.Close()
 
 	f1 := `version: 0.0.1
-description: simple description
+summary: simple description
 source:
   url: https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz
   hash: 5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d
@@ -107,7 +107,7 @@ source:
 `
 
 	f2 := `name: simple
-description: simple description
+summary: simple description
 source:
   url: https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz
   hash: 5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d
@@ -119,7 +119,7 @@ source:
 
 	f3 := `name: simple
 version: 0.0.1
-description: simple description
+summary: simple description
 `
 
 	tmpFile.WriteString(f1)
@@ -148,6 +148,9 @@ func (fp FakePackage) Name() string {
 	return fp.myName
 }
 func (fp FakePackage) Version() string {
+	return ""
+}
+func (fp FakePackage) Summary() string {
 	return ""
 }
 func (fp FakePackage) Description() string {
