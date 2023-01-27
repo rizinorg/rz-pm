@@ -48,6 +48,7 @@ jobs:
         run: |
           git clone --depth=1 https://github.com/rizinorg/rizin
           cd rizin
+          git checkout v0.4.1
           meson --buildtype=release --prefix=${{ matrix.prefix }} ${{ matrix.meson_options }} build
           meson compile -C build
           ${{ matrix.sudo }} meson install -C build
