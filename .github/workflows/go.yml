@@ -50,6 +50,7 @@ jobs:
           cd rizin
           git checkout v0.4.1
           meson --buildtype=release --prefix=${{ matrix.prefix }} ${{ matrix.meson_options }} build
+          cat ../rizin/build/rz_userconf.h
           meson compile -C build
           ${{ matrix.sudo }} meson install -C build
           cd ..
@@ -73,10 +74,6 @@ jobs:
         run: ./rz-pm list | grep -q 'Converts asm to pseudo-C code'
       - name: Print rizin lib
         run: rizin -H
-      - name: Print rz_userconf
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: cat ../rizin/build/rz_userconf.h
       - name: Install jsdec
         run: ./rz-pm install jsdec
       - name: Check jsdec
