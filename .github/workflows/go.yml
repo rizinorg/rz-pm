@@ -71,6 +71,8 @@ jobs:
         run: go build
       - name: Make sure jsdec is present in the database
         run: ./rz-pm list | grep -q 'Converts asm to pseudo-C code'
+      - name: Print rizin lib
+        run: rizin -H
       - name: Install jsdec
         run: ./rz-pm install jsdec
       - name: Check jsdec
