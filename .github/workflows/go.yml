@@ -73,6 +73,9 @@ jobs:
         run: ./rz-pm list | grep -q 'Converts asm to pseudo-C code'
       - name: Print rizin lib
         run: rizin -H
+      - name: Print rz_userconf
+        shell: pwsh
+        run: cat ./rizin/build/rz_userconf.h
       - name: Install jsdec
         run: ./rz-pm install jsdec
       - name: Check jsdec
