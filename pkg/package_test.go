@@ -108,10 +108,10 @@ func TestInstallSimplePackage(t *testing.T) {
 		PackageDescription: "simple description",
 		PackageVersion:     "0.0.1",
 		PackageSource: &RizinPackageSource{
-			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz",
-			Hash:           "5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d",
+			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.5.0.tar.gz",
+			Hash:           "ef73ccc609c7c0b010fc33ffac51d9352451515e355684ca9f01883b4f4db5eb",
 			BuildSystem:    "meson",
-			Directory:      "jsdec-0.4.0/p",
+			Directory:      "jsdec-0.5.0/p",
 			BuildArguments: []string{"-Djsc_folder=..", "-Drizin_plugdir="},
 		},
 	}
@@ -145,10 +145,10 @@ func TestUninstallSimplePackage(t *testing.T) {
 		PackageDescription: "simple description",
 		PackageVersion:     "0.0.1",
 		PackageSource: &RizinPackageSource{
-			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz",
-			Hash:           "5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d",
+			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.5.0.tar.gz",
+			Hash:           "ef73ccc609c7c0b010fc33ffac51d9352451515e355684ca9f01883b4f4db5eb",
 			BuildSystem:    "meson",
-			Directory:      "jsdec-0.4.0/p",
+			Directory:      "jsdec-0.5.0/p",
 			BuildArguments: []string{"-Djsc_folder=..", "-Drizin_plugdir="},
 		},
 	}
