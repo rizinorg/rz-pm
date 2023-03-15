@@ -181,6 +181,92 @@ func upgradeRzPm(c *cli.Context) error {
 	return nil
 }
 
+func installPackages(c *cli.Context) error {
+	if c.Args().Len() < 1 {
+		cli.ShowCommandHelp(c, "install")
+		return fmt.Errorf("wrong usage of install command")
+	}
+	for _, packageName := range c.Args().Slice() {
+		if packageName == "" {
+			cli.ShowCommandHelp(c, "install")
+			return fmt.Errorf("wrong usage of install command")
+		}
+		site, err := pkg.InitSite(pkg.SiteDir())
+		if err != nil {
+			return err
+		}
+
+		pkg, err := site.GetPackage(packageName)
+		if err != nil {
+			return err
+		}
+
+		if c.Bool("clean") {
+			site.CleanPackage(pkg)
+		}
+
+		err = site.InstallPackage(pkg)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func uninstallPackages(c *cli.Context) error {
+	if c.Args().Len() < 1 {
+		cli.ShowCommandHelp(c, "uninstall")
+		return fmt.Errorf("wrong usage of uninstall command")
+	}
+	for _, packageName := range c.Args().Slice() {
+		if packageName == "" {
+			cli.ShowCommandHelp(c, "uninstall")
+			return fmt.Errorf("wrong usage of uninstall command")
+		}
+
+		site, err := pkg.InitSite(pkg.SiteDir())
+		if err != nil {
+			return err
+		}
+
+		pkg, err := site.GetPackage(packageName)
+		if err != nil {
+			return err
+		}
+
+		err = site.UninstallPackage(pkg)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func cleanPackage(c *cli.Context) error {
+	packageName := c.Args().First()
+	if packageName == "" || c.Args().Len() != 1 {
+		cli.ShowCommandHelp(c, "clean")
+		return fmt.Errorf("wrong usage of clean command")
+	}
+
+	site, err := pkg.InitSite(pkg.SiteDir())
+	if err != nil {
+		return err
+	}
+
+	pkg, err := site.GetPackage(packageName)
+	if err != nil {
+		return err
+	}
+
+	err = site.CleanPackage(pkg)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Package %s build artifacts have been cleaned.\n", pkg.Name())
+	return nil
+}
+
 func main() {
 	const flagNameDebug = "debug"
 	const flagSkipUpgrade = "skip-upgrade"
@@ -234,32 +320,12 @@ func main() {
 			Name:      "install",
 			Usage:     "install a package",
 			ArgsUsage: "<package-name> [<package-name> ...]",
-			Action: func(c *cli.Context) error {
-				if c.Args().Len() < 1 {
-					cli.ShowCommandHelp(c, "install")
-					return fmt.Errorf("wrong usage of install command")
-				}
-				for _, packageName := range c.Args().Slice() {
-					if packageName == "" {
-						cli.ShowCommandHelp(c, "install")
-						return fmt.Errorf("wrong usage of install command")
-					}
-					site, err := pkg.InitSite(pkg.SiteDir())
-					if err != nil {
-						return err
-					}
-
-					pkg, err := site.GetPackage(packageName)
-					if err != nil {
-						return err
-					}
-
-					err = site.InstallPackage(pkg)
-					if err != nil {
-						return err
-					}
-				}
-				return nil
+			Action:    installPackages,
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:  "clean",
+					Usage: "do a clean before installing the package",
+				},
 			},
 		},
 		{
@@ -283,35 +349,14 @@ func main() {
 		{
 			Name:      "uninstall",
 			Usage:     "uninstall a package",
-			ArgsUsage: "PACKAGE",
-			Action: func(c *cli.Context) error {
-				if c.Args().Len() < 1 {
-					cli.ShowCommandHelp(c, "uninstall")
-					return fmt.Errorf("wrong usage of uninstall command")
-				}
-				for _, packageName := range c.Args().Slice() {
-					if packageName == "" {
-						cli.ShowCommandHelp(c, "uninstall")
-						return fmt.Errorf("wrong usage of uninstall command")
-					}
-
-					site, err := pkg.InitSite(pkg.SiteDir())
-					if err != nil {
-						return err
-					}
-
-					pkg, err := site.GetPackage(packageName)
-					if err != nil {
-						return err
-					}
-
-					err = site.UninstallPackage(pkg)
-					if err != nil {
-						return err
-					}
-				}
-				return nil
-			},
+			ArgsUsage: "<package-name> [<package-name> ...]",
+			Action:    uninstallPackages,
+		},
+		{
+			Name:      "clean",
+			Usage:     "remove any temporary build artifacts of a package",
+			ArgsUsage: "<package-name>",
+			Action:    cleanPackage,
 		},
 		{
 			Name:   "info",

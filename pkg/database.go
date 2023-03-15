@@ -119,5 +119,5 @@ func (d Database) GetPackage(name string) (Package, error) {
 		}
 	}
 
-	return RizinPackage{}, fmt.Errorf("package not found")
+	return RizinPackage{}, fmt.Errorf("package '%s' not found", name)
 }

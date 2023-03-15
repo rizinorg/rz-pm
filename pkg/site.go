@@ -38,6 +38,7 @@ type Site interface {
 	GetCMakeDir() string
 	InstallPackage(pkg Package) error
 	UninstallPackage(pkg Package) error
+	CleanPackage(pkg Package) error
 	Remove() error
 }
 
@@ -192,6 +193,21 @@ func (s *RizinSite) UninstallPackage(pkg Package) error {
 
 	installedFilePath := filepath.Join(s.Path, installedFile)
 	return updateInstalledPackageNames(installedFilePath, s.installedPackages)
+}
+
+func (s *RizinSite) CleanPackage(pkg Package) error {
+	pkgArtifactsPath := filepath.Join(s.GetArtifactsDir(), pkg.Name())
+	_, err := os.Stat(pkgArtifactsPath)
+	if err != nil {
+		return fmt.Errorf("package %s does not have any build artifacts", pkg.Name())
+	}
+
+	err = os.RemoveAll(pkgArtifactsPath)
+	if err != nil {
+		return fmt.Errorf("failed to remove build artifacts for package %s", pkg.Name())
+	}
+
+	return nil
 }
 
 func (s *RizinSite) Remove() error {
