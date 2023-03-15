@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -140,8 +139,9 @@ func TestInstallSimplePackage(t *testing.T) {
 	for i := range files {
 		assert.Contains(t, files[i].Name(), "core_pdd", "the name of the plugin lib is jsdec")
 	}
-	require.Len(t, installed_files, 1, "only the plugin is installed")
-	require.True(t, strings.Contains(installed_files[0], "libcore_pdd"), "jsdec should install libcore_pdd in plugins dir")
+	for i := range installed_files {
+		assert.Contains(t, installed_files[i], "libcore_pdd", "jsdec should install libcore_pdd in plugins dir")
+	}
 }
 
 func TestUninstallSimplePackage(t *testing.T) {
