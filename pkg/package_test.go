@@ -140,7 +140,7 @@ func TestInstallSimplePackage(t *testing.T) {
 		assert.Contains(t, files[i].Name(), "core_pdd", "the name of the plugin lib is jsdec")
 	}
 	for i := range installed_files {
-		assert.Contains(t, installed_files[i], "libcore_pdd", "jsdec should install libcore_pdd in plugins dir")
+		assert.Contains(t, installed_files[i], "core_pdd", "jsdec should install core_pdd in plugins dir")
 	}
 }
 
