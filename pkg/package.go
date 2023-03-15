@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -48,7 +49,7 @@ type Package interface {
 	Source() RizinPackageSource
 	Download(baseArtifactsPath string) error
 	Build(site Site) error
-	Install(site Site) error
+	Install(site Site) ([]string, error)
 	Uninstall(site Site) error
 }
 
@@ -111,6 +112,9 @@ func (rp RizinPackage) Download(baseArtifactsPath string) error {
 	fmt.Printf("Verifying downloaded archive...\n")
 	computedHash := sha256.Sum256(content)
 	if hex.EncodeToString(computedHash[:]) != rp.PackageSource.Hash {
+		fmt.Printf("Hash for downloaded archive does not match.\n")
+		fmt.Printf("Expected: %s\n", rp.PackageSource.Hash)
+		fmt.Printf("Actual: %s\n", hex.EncodeToString(computedHash[:]))
 		return ErrRizinPackageWrongHash
 	}
 
@@ -175,7 +179,8 @@ func (rp RizinPackage) sourcePath(baseArtifactsPath string) string {
 
 func (rp RizinPackage) buildMeson(site Site) error {
 	srcPath := rp.sourcePath(site.GetArtifactsDir())
-	args := rp.PackageSource.BuildArguments
+	args := []string{"setup"}
+	args = append(args, rp.PackageSource.BuildArguments...)
 	args = append(args, fmt.Sprintf("--prefix=%s/.local", xdg.Home))
 	if site.GetPkgConfigDir() != "" {
 		args = append(args, fmt.Sprintf("--pkg-config-path=%s", site.GetPkgConfigDir()))
@@ -202,16 +207,34 @@ func (rp RizinPackage) buildMeson(site Site) error {
 	return nil
 }
 
-func (rp RizinPackage) installMeson(site Site) error {
+func (rp RizinPackage) installMeson(site Site) ([]string, error) {
 	srcPath := rp.sourcePath(site.GetArtifactsDir())
 	cmd := exec.Command("meson", "install", "-C", "build")
 	cmd.Dir = srcPath
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.Writer()
 	if err := cmd.Run(); err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+
+	cmd = exec.Command("meson", "introspect", "--installed", "build")
+	cmd.Dir = srcPath
+	cmd.Stderr = log.Writer()
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+	var data map[string]string
+	err = json.Unmarshal([]byte(out), &data)
+	if err != nil {
+		return nil, err
+	}
+
+	var installed_files []string
+	for _, v := range data {
+		installed_files = append(installed_files, v)
+	}
+	return installed_files, nil
 }
 
 func (rp RizinPackage) uninstallMeson(site Site) error {
@@ -241,7 +264,10 @@ func (rp RizinPackage) Build(site Site) error {
 
 	srcPath := rp.sourcePath(site.GetArtifactsDir())
 	if fi, err := os.Stat(srcPath); err != nil || !fi.IsDir() {
-		rp.Download(site.GetArtifactsDir())
+		err := rp.Download(site.GetArtifactsDir())
+		if err != nil {
+			return err
+		}
 	}
 
 	fmt.Printf("Building %s...\n", rp.PackageName)
@@ -267,24 +293,25 @@ func (rp RizinPackage) Build(site Site) error {
 }
 
 // Install a package after building it
-func (rp RizinPackage) Install(site Site) error {
+func (rp RizinPackage) Install(site Site) ([]string, error) {
 	err := rp.Build(site)
 	if err != nil {
-		return err
+		return []string{}, err
 	}
 
+	var installed_files []string
 	fmt.Printf("Installing %s...\n", rp.PackageName)
 	if rp.PackageSource.BuildSystem == "meson" {
-		err = rp.installMeson(site)
+		installed_files, err = rp.installMeson(site)
 	} else {
 		log.Printf("BuildSystem %s is not supported yet.", rp.PackageSource.BuildSystem)
 		err = fmt.Errorf("unsupported build system")
 	}
 	if err != nil {
-		return err
+		return []string{}, err
 	}
 	fmt.Printf("Package %s built and installed.\n", rp.PackageName)
-	return nil
+	return installed_files, nil
 }
 
 func (rp RizinPackage) Uninstall(site Site) error {

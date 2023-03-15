@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -128,7 +129,7 @@ func TestInstallSimplePackage(t *testing.T) {
 	err = p.Download(tmpPath)
 	require.NoError(t, err, "package should be downloaded")
 
-	err = p.Install(FakeSite{ArtifactsDir: tmpPath})
+	installed_files, err := p.Install(FakeSite{ArtifactsDir: tmpPath})
 	assert.NoError(t, err, "The plugin should be built and installed without errors")
 	files, err := ioutil.ReadDir(pluginsPath)
 	require.NoError(t, err, "pluginsPath should be read")
@@ -136,6 +137,8 @@ func TestInstallSimplePackage(t *testing.T) {
 	for i := range files {
 		assert.Contains(t, files[i].Name(), "core_pdd", "the name of the plugin lib is jsdec")
 	}
+	require.Len(t, installed_files, 1, "only the plugin is installed")
+	require.True(t, strings.Contains(installed_files[0], "libcore_pdd"), "jsdec should install libcore_pdd in plugins dir")
 }
 
 func TestUninstallSimplePackage(t *testing.T) {
@@ -166,7 +169,7 @@ func TestUninstallSimplePackage(t *testing.T) {
 	require.NoError(t, err, "package should be downloaded")
 
 	s := FakeSite{ArtifactsDir: tmpPath}
-	err = p.Install(s)
+	_, err = p.Install(s)
 	assert.NoError(t, err, "The plugin should be built and installed without errors")
 
 	err = p.Uninstall(s)

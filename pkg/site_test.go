@@ -165,8 +165,8 @@ func (fp FakePackage) Download(baseArtifactsPath string) error {
 func (fp FakePackage) Build(site Site) error {
 	return nil
 }
-func (fp FakePackage) Install(site Site) error {
-	return nil
+func (fp FakePackage) Install(site Site) ([]string, error) {
+	return nil, nil
 }
 func (fp FakePackage) Uninstall(site Site) error {
 	return nil

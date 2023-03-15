@@ -41,12 +41,17 @@ type Site interface {
 	Remove() error
 }
 
+type InstalledPackage struct {
+	Name  string
+	Files *[]string
+}
+
 type RizinSite struct {
-	Path                   string
-	Database               Database
-	PkgConfigPath          string
-	CMakePath              string
-	installedPackagesNames []string
+	Path              string
+	Database          Database
+	PkgConfigPath     string
+	CMakePath         string
+	installedPackages []InstalledPackage
 }
 
 const dbDir string = "rz-pm-db"
@@ -91,11 +96,11 @@ func InitSite(path string) (Site, error) {
 	}
 
 	s := RizinSite{
-		Path:                   path,
-		Database:               d,
-		PkgConfigPath:          pkgConfigPath,
-		CMakePath:              cmakePath,
-		installedPackagesNames: installedPackageNames,
+		Path:              path,
+		Database:          d,
+		PkgConfigPath:     pkgConfigPath,
+		CMakePath:         cmakePath,
+		installedPackages: installedPackageNames,
 	}
 	return &s, nil
 }
@@ -105,9 +110,9 @@ func (s *RizinSite) ListAvailablePackages() ([]Package, error) {
 }
 
 func (s *RizinSite) ListInstalledPackages() ([]Package, error) {
-	installedPackages := make([]Package, len(s.installedPackagesNames))
-	for i := range s.installedPackagesNames {
-		pkg, err := s.Database.GetPackage(s.installedPackagesNames[i])
+	installedPackages := make([]Package, len(s.installedPackages))
+	for i := range s.installedPackages {
+		pkg, err := s.Database.GetPackage(s.installedPackages[i].Name)
 		if err != nil {
 			return nil, err
 		}
@@ -117,7 +122,7 @@ func (s *RizinSite) ListInstalledPackages() ([]Package, error) {
 }
 
 func (s *RizinSite) IsPackageInstalled(pkg Package) bool {
-	return containsString(s.installedPackagesNames, pkg.Name())
+	return containsInstalledPackage(s.installedPackages, pkg.Name())
 }
 
 func (s *RizinSite) GetPackage(name string) (Package, error) {
@@ -141,33 +146,52 @@ func (s *RizinSite) GetCMakeDir() string {
 }
 
 func (s *RizinSite) InstallPackage(pkg Package) error {
-	if containsString(s.installedPackagesNames, pkg.Name()) {
+	if containsInstalledPackage(s.installedPackages, pkg.Name()) {
 		return fmt.Errorf("package %s already installed", pkg.Name())
 	}
 
-	err := pkg.Install(s)
+	files, err := pkg.Install(s)
 	if err != nil {
 		return err
 	}
 
-	s.installedPackagesNames = append(s.installedPackagesNames, pkg.Name())
+	s.installedPackages = append(s.installedPackages, InstalledPackage{
+		pkg.Name(),
+		&files,
+	})
 	installedFilePath := filepath.Join(s.Path, installedFile)
-	return updateInstalledPackageNames(installedFilePath, s.installedPackagesNames)
+	return updateInstalledPackageNames(installedFilePath, s.installedPackages)
 }
 
 func (s *RizinSite) UninstallPackage(pkg Package) error {
-	if !containsString(s.installedPackagesNames, pkg.Name()) {
+	if !containsInstalledPackage(s.installedPackages, pkg.Name()) {
 		return fmt.Errorf("package %s not installed", pkg.Name())
 	}
 
-	err := pkg.Uninstall(s)
+	installedPackage, err := getInstalledPackage(s.installedPackages, pkg.Name())
 	if err != nil {
 		return err
 	}
 
-	s.installedPackagesNames = removeStringFromSlice(s.installedPackagesNames, pkg.Name())
+	if installedPackage.Files == nil {
+		// NOTE: kept for compatibility with v0.1.9
+		err = pkg.Uninstall(s)
+		if err != nil {
+			return err
+		}
+	} else {
+		fmt.Printf("Uninstalling %s...\n", pkg.Name())
+		for _, file := range *installedPackage.Files {
+			os.RemoveAll(file)
+		}
+
+	}
+
+	s.installedPackages = removePackageFromSlice(s.installedPackages, pkg.Name())
+	fmt.Printf("Package %s uninstalled.\n", pkg.Name())
+
 	installedFilePath := filepath.Join(s.Path, installedFile)
-	return updateInstalledPackageNames(installedFilePath, s.installedPackagesNames)
+	return updateInstalledPackageNames(installedFilePath, s.installedPackages)
 }
 
 func (s *RizinSite) Remove() error {
@@ -217,27 +241,37 @@ func getCMakePath() (string, error) {
 	return cmakePath, nil
 }
 
-func getInstalledPackageNames(path string) ([]string, error) {
+func getInstalledPackageNames(path string) ([]InstalledPackage, error) {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		return []string{}, nil
+		return []InstalledPackage{}, nil
 	}
 
 	by, err := ioutil.ReadFile(path)
 	if err != nil {
-		return []string{}, err
+		return []InstalledPackage{}, err
 	}
 
-	var v []string
+	var v []InstalledPackage
 	err = json.Unmarshal(by, &v)
 	if err != nil {
-		return []string{}, err
+		var vs []string
+		err = json.Unmarshal(by, &vs)
+		if err != nil {
+			return []InstalledPackage{}, err
+		}
+
+		for _, s := range vs {
+			if s != "" {
+				v = append(v, InstalledPackage{Name: s, Files: nil})
+			}
+		}
 	}
 
 	return v, nil
 }
 
-func updateInstalledPackageNames(path string, names []string) error {
+func updateInstalledPackageNames(path string, names []InstalledPackage) error {
 	by, err := json.Marshal(names)
 	if err != nil {
 		return err
@@ -249,20 +283,32 @@ func updateInstalledPackageNames(path string, names []string) error {
 	return err
 }
 
-func removeStringFromSlice(sl []string, name string) []string {
+func removePackageFromSlice(sl []InstalledPackage, name string) []InstalledPackage {
 	for i := range sl {
-		if sl[i] == name {
-			return append(sl[:i], sl[i+1:]...)
+		if sl[i].Name == name {
+			ret := make([]InstalledPackage, 0)
+			if i > 0 {
+				ret = append(ret, sl[:i]...)
+			}
+			if i < len(sl)-1 {
+				ret = append(ret, sl[i+1:]...)
+			}
+			return ret
 		}
 	}
 	return sl
 }
 
-func containsString(sl []string, name string) bool {
+func getInstalledPackage(sl []InstalledPackage, name string) (InstalledPackage, error) {
 	for _, v := range sl {
-		if v == name {
-			return true
+		if v.Name == name {
+			return v, nil
 		}
 	}
-	return false
+	return InstalledPackage{}, fmt.Errorf("installed package %s not found", name)
+}
+
+func containsInstalledPackage(sl []InstalledPackage, name string) bool {
+	_, err := getInstalledPackage(sl, name)
+	return err == nil
 }

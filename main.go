@@ -233,27 +233,31 @@ func main() {
 		{
 			Name:      "install",
 			Usage:     "install a package",
-			ArgsUsage: "[package-name]",
+			ArgsUsage: "<package-name> [<package-name> ...]",
 			Action: func(c *cli.Context) error {
-				packageName := c.Args().First()
-				if packageName == "" || c.Args().Len() != 1 {
+				if c.Args().Len() < 1 {
 					cli.ShowCommandHelp(c, "install")
 					return fmt.Errorf("wrong usage of install command")
 				}
+				for _, packageName := range c.Args().Slice() {
+					if packageName == "" {
+						cli.ShowCommandHelp(c, "install")
+						return fmt.Errorf("wrong usage of install command")
+					}
+					site, err := pkg.InitSite(pkg.SiteDir())
+					if err != nil {
+						return err
+					}
 
-				site, err := pkg.InitSite(pkg.SiteDir())
-				if err != nil {
-					return err
-				}
+					pkg, err := site.GetPackage(packageName)
+					if err != nil {
+						return err
+					}
 
-				pkg, err := site.GetPackage(packageName)
-				if err != nil {
-					return err
-				}
-
-				err = site.InstallPackage(pkg)
-				if err != nil {
-					return err
+					err = site.InstallPackage(pkg)
+					if err != nil {
+						return err
+					}
 				}
 				return nil
 			},
@@ -281,25 +285,30 @@ func main() {
 			Usage:     "uninstall a package",
 			ArgsUsage: "PACKAGE",
 			Action: func(c *cli.Context) error {
-				packageName := c.Args().First()
-				if packageName == "" || c.Args().Len() != 1 {
+				if c.Args().Len() < 1 {
 					cli.ShowCommandHelp(c, "uninstall")
 					return fmt.Errorf("wrong usage of uninstall command")
 				}
+				for _, packageName := range c.Args().Slice() {
+					if packageName == "" {
+						cli.ShowCommandHelp(c, "uninstall")
+						return fmt.Errorf("wrong usage of uninstall command")
+					}
 
-				site, err := pkg.InitSite(pkg.SiteDir())
-				if err != nil {
-					return err
-				}
+					site, err := pkg.InitSite(pkg.SiteDir())
+					if err != nil {
+						return err
+					}
 
-				pkg, err := site.GetPackage(packageName)
-				if err != nil {
-					return err
-				}
+					pkg, err := site.GetPackage(packageName)
+					if err != nil {
+						return err
+					}
 
-				err = site.UninstallPackage(pkg)
-				if err != nil {
-					return err
+					err = site.UninstallPackage(pkg)
+					if err != nil {
+						return err
+					}
 				}
 				return nil
 			},
