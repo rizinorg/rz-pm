@@ -77,7 +77,12 @@ func infoPackage(c *cli.Context) error {
 		return err
 	}
 
-	pkg, err := site.GetPackage(packageName)
+	var pkg pkg.Package
+	if c.Bool("file") {
+		pkg, err = site.GetPackageFromFile(packageName)
+	} else {
+		pkg, err = site.GetPackage(packageName)
+	}
 	if err != nil {
 		return err
 	}
@@ -196,7 +201,12 @@ func installPackages(c *cli.Context) error {
 			return err
 		}
 
-		pkg, err := site.GetPackage(packageName)
+		var pkg pkg.Package
+		if c.Bool("file") {
+			pkg, err = site.GetPackageFromFile(packageName)
+		} else {
+			pkg, err = site.GetPackage(packageName)
+		}
 		if err != nil {
 			return err
 		}
@@ -229,7 +239,12 @@ func uninstallPackages(c *cli.Context) error {
 			return err
 		}
 
-		pkg, err := site.GetPackage(packageName)
+		var pkg pkg.Package
+		if c.Bool("file") {
+			pkg, err = site.GetPackageFromFile(packageName)
+		} else {
+			pkg, err = site.GetPackage(packageName)
+		}
 		if err != nil {
 			return err
 		}
@@ -254,7 +269,12 @@ func cleanPackage(c *cli.Context) error {
 		return err
 	}
 
-	pkg, err := site.GetPackage(packageName)
+	var pkg pkg.Package
+	if c.Bool("file") {
+		pkg, err = site.GetPackageFromFile(packageName)
+	} else {
+		pkg, err = site.GetPackage(packageName)
+	}
 	if err != nil {
 		return err
 	}
@@ -326,6 +346,10 @@ func main() {
 					Name:  "clean",
 					Usage: "do a clean before installing the package",
 				},
+				&cli.BoolFlag{
+					Name:  "file",
+					Usage: "install a local file(s)",
+				},
 			},
 		},
 		{
@@ -351,17 +375,35 @@ func main() {
 			Usage:     "uninstall a package",
 			ArgsUsage: "<package-name> [<package-name> ...]",
 			Action:    uninstallPackages,
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:  "file",
+					Usage: "info a local file",
+				},
+			},
 		},
 		{
 			Name:      "clean",
 			Usage:     "remove any temporary build artifacts of a package",
 			ArgsUsage: "<package-name>",
 			Action:    cleanPackage,
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:  "file",
+					Usage: "info a local file",
+				},
+			},
 		},
 		{
 			Name:   "info",
 			Usage:  "info about a package",
 			Action: infoPackage,
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:  "file",
+					Usage: "info a local file",
+				},
+			},
 		},
 		{
 			Name:   "upgrade",

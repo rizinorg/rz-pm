@@ -78,7 +78,7 @@ source:
   directory: jsdec-0.4.0/p
 `)
 
-	pkg, err := parsePackageFromFile(tmpFile.Name())
+	pkg, err := ParsePackageFile(tmpFile.Name())
 	require.NoError(t, err, "no errors in parsing the above package file")
 	assert.Equal(t, "simple", pkg.Name())
 	assert.Equal(t, "0.0.1", pkg.Version())
@@ -124,19 +124,19 @@ summary: simple description
 
 	tmpFile.WriteString(f1)
 
-	_, err = parsePackageFromFile(tmpFile.Name())
+	_, err = ParsePackageFile(tmpFile.Name())
 	assert.Error(t, err, "missing name should fail parsing")
 
 	tmpFile.Truncate(0)
 	tmpFile.WriteString(f2)
 
-	_, err = parsePackageFromFile(tmpFile.Name())
+	_, err = ParsePackageFile(tmpFile.Name())
 	assert.Error(t, err, "missing version should fail parsing")
 
 	tmpFile.Truncate(0)
 	tmpFile.WriteString(f3)
 
-	_, err = parsePackageFromFile(tmpFile.Name())
+	_, err = ParsePackageFile(tmpFile.Name())
 	assert.Error(t, err, "missing source should fail parsing")
 }
 

@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"archive/tar"
+	"bufio"
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
@@ -93,7 +94,7 @@ func (rp RizinPackage) Download(baseArtifactsPath string) error {
 	if err != nil {
 		return err
 	}
-	// defer os.Remove(tarballFile.Name())
+	defer os.Remove(tarballFile.Name())
 
 	_, err = io.Copy(tarballFile, resp.Body)
 	if err != nil {
@@ -207,6 +208,34 @@ func (rp RizinPackage) buildMeson(site Site) error {
 	return nil
 }
 
+func (rp RizinPackage) buildCMake(site Site) error {
+	srcPath := rp.sourcePath(site.GetArtifactsDir())
+	args := []string{}
+	args = append(args, rp.PackageSource.BuildArguments...)
+	args = append(args, fmt.Sprintf("-DCMAKE_INSTALL_PREFIX=%s/.local", xdg.Home))
+	if site.GetCMakeDir() != "" {
+		args = append(args, fmt.Sprintf("-DCMAKE_PREFIX_PATH=%s", site.GetCMakeDir()))
+	}
+	args = append(args, "-B")
+	args = append(args, "build")
+	cmd := exec.Command("cmake", args...)
+	cmd.Dir = srcPath
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	cmd = exec.Command("cmake", "--build", "build")
+	cmd.Dir = srcPath
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (rp RizinPackage) installMeson(site Site) ([]string, error) {
 	srcPath := rp.sourcePath(site.GetArtifactsDir())
 	cmd := exec.Command("meson", "install", "-C", "build")
@@ -235,6 +264,33 @@ func (rp RizinPackage) installMeson(site Site) ([]string, error) {
 		installed_files = append(installed_files, v)
 	}
 	return installed_files, nil
+}
+
+func (rp RizinPackage) installCMake(site Site) ([]string, error) {
+	srcPath := rp.sourcePath(site.GetArtifactsDir())
+	cmd := exec.Command("cmake", "--install", "build")
+	cmd.Dir = srcPath
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+
+	file, err := os.Open(filepath.Join(srcPath, "build", "install_manifest.txt"))
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	var lines []string
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return lines, nil
 }
 
 func (rp RizinPackage) uninstallMeson(site Site) error {
@@ -286,6 +342,18 @@ func (rp RizinPackage) Build(site Site) error {
 		}
 
 		return rp.buildMeson(site)
+	} else if rp.PackageSource.BuildSystem == "cmake" {
+		_, err := exec.LookPath("cmake")
+		if err != nil {
+			return fmt.Errorf(buildErrorMsg("make sure 'cmake' is installed and in PATH"))
+		}
+
+		_, err = exec.LookPath("pkg-config")
+		if err != nil {
+			return fmt.Errorf(buildErrorMsg("make sure `pkg-config` is installed and in PATH"))
+		}
+
+		return rp.buildCMake(site)
 	} else {
 		log.Printf("BuildSystem %s is not supported yet.", rp.PackageSource.BuildSystem)
 		return fmt.Errorf("unsupported build system")
@@ -303,6 +371,8 @@ func (rp RizinPackage) Install(site Site) ([]string, error) {
 	fmt.Printf("Installing %s...\n", rp.PackageName)
 	if rp.PackageSource.BuildSystem == "meson" {
 		installed_files, err = rp.installMeson(site)
+	} else if rp.PackageSource.BuildSystem == "cmake" {
+		installed_files, err = rp.installCMake(site)
 	} else {
 		log.Printf("BuildSystem %s is not supported yet.", rp.PackageSource.BuildSystem)
 		err = fmt.Errorf("unsupported build system")

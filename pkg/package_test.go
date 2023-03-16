@@ -79,6 +79,9 @@ func (s FakeSite) IsPackageInstalled(pkg Package) bool {
 func (s FakeSite) GetPackage(name string) (Package, error) {
 	return RizinPackage{}, nil
 }
+func (s FakeSite) GetPackageFromFile(filename string) (Package, error) {
+	return RizinPackage{}, nil
+}
 func (s FakeSite) GetBaseDir() string {
 	return ""
 }

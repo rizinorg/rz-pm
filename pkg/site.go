@@ -32,6 +32,7 @@ type Site interface {
 	ListInstalledPackages() ([]Package, error)
 	IsPackageInstalled(pkg Package) bool
 	GetPackage(name string) (Package, error)
+	GetPackageFromFile(filename string) (Package, error)
 	GetBaseDir() string
 	GetArtifactsDir() string
 	GetPkgConfigDir() string
@@ -43,8 +44,8 @@ type Site interface {
 }
 
 type InstalledPackage struct {
-	Name  string
-	Files *[]string
+	InstalledName  string    `json:"name"`
+	InstalledFiles *[]string `json:"files"`
 }
 
 type RizinSite struct {
@@ -106,18 +107,47 @@ func InitSite(path string) (Site, error) {
 	return &s, nil
 }
 
+func (rp InstalledPackage) Name() string {
+	return rp.InstalledName
+}
+func (rp InstalledPackage) Version() string            { return "" }
+func (rp InstalledPackage) Description() string        { return "" }
+func (rp InstalledPackage) Summary() string            { return "" }
+func (rp InstalledPackage) Source() RizinPackageSource { return RizinPackageSource{} }
+func (rp InstalledPackage) Download(baseArtifactsPath string) error {
+	return fmt.Errorf("cannot be called")
+}
+func (rp InstalledPackage) Build(site Site) error { return fmt.Errorf("cannot be called") }
+func (rp InstalledPackage) Install(site Site) ([]string, error) {
+	return nil, fmt.Errorf("cannot be called")
+}
+func (rp InstalledPackage) Uninstall(site Site) error { return fmt.Errorf("cannot be called") }
+
 func (s *RizinSite) ListAvailablePackages() ([]Package, error) {
-	return s.Database.ListAvailablePackages()
+	res, err := s.Database.ListAvailablePackages()
+	if err != nil {
+		return []Package{}, err
+	}
+
+	for i := range s.installedPackages {
+		_, err := s.Database.GetPackage(s.installedPackages[i].InstalledName)
+		if err != nil {
+			res = append(res, s.installedPackages[i])
+		}
+	}
+
+	return res, nil
 }
 
 func (s *RizinSite) ListInstalledPackages() ([]Package, error) {
 	installedPackages := make([]Package, len(s.installedPackages))
 	for i := range s.installedPackages {
-		pkg, err := s.Database.GetPackage(s.installedPackages[i].Name)
+		pkg, err := s.Database.GetPackage(s.installedPackages[i].InstalledName)
 		if err != nil {
-			return nil, err
+			installedPackages[i] = s.installedPackages[i]
+		} else {
+			installedPackages[i] = pkg
 		}
-		installedPackages[i] = pkg
 	}
 	return installedPackages, nil
 }
@@ -128,6 +158,10 @@ func (s *RizinSite) IsPackageInstalled(pkg Package) bool {
 
 func (s *RizinSite) GetPackage(name string) (Package, error) {
 	return s.Database.GetPackage(name)
+}
+
+func (s *RizinSite) GetPackageFromFile(filename string) (Package, error) {
+	return ParsePackageFile(filename)
 }
 
 func (s *RizinSite) GetBaseDir() string {
@@ -174,7 +208,7 @@ func (s *RizinSite) UninstallPackage(pkg Package) error {
 		return err
 	}
 
-	if installedPackage.Files == nil {
+	if installedPackage.InstalledFiles == nil {
 		// NOTE: kept for compatibility with v0.1.9
 		err = pkg.Uninstall(s)
 		if err != nil {
@@ -182,7 +216,7 @@ func (s *RizinSite) UninstallPackage(pkg Package) error {
 		}
 	} else {
 		fmt.Printf("Uninstalling %s...\n", pkg.Name())
-		for _, file := range *installedPackage.Files {
+		for _, file := range *installedPackage.InstalledFiles {
 			os.RemoveAll(file)
 		}
 
@@ -279,7 +313,7 @@ func getInstalledPackageNames(path string) ([]InstalledPackage, error) {
 
 		for _, s := range vs {
 			if s != "" {
-				v = append(v, InstalledPackage{Name: s, Files: nil})
+				v = append(v, InstalledPackage{InstalledName: s, InstalledFiles: nil})
 			}
 		}
 	}
@@ -301,7 +335,7 @@ func updateInstalledPackageNames(path string, names []InstalledPackage) error {
 
 func removePackageFromSlice(sl []InstalledPackage, name string) []InstalledPackage {
 	for i := range sl {
-		if sl[i].Name == name {
+		if sl[i].InstalledName == name {
 			ret := make([]InstalledPackage, 0)
 			if i > 0 {
 				ret = append(ret, sl[:i]...)
@@ -317,7 +351,7 @@ func removePackageFromSlice(sl []InstalledPackage, name string) []InstalledPacka
 
 func getInstalledPackage(sl []InstalledPackage, name string) (InstalledPackage, error) {
 	for _, v := range sl {
-		if v.Name == name {
+		if v.InstalledName == name {
 			return v, nil
 		}
 	}

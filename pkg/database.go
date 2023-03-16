@@ -56,7 +56,7 @@ func (d Database) updateDatabase() error {
 	return nil
 }
 
-func parsePackageFromFile(path string) (Package, error) {
+func ParsePackageFile(path string) (Package, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return RizinPackage{}, err
@@ -95,7 +95,7 @@ func (d Database) ListAvailablePackages() ([]Package, error) {
 
 		name := filepath.Join(dbPath, file.Name())
 
-		p, err := parsePackageFromFile(name)
+		p, err := ParsePackageFile(name)
 		if err != nil {
 			fmt.Printf("Warning: could not read %s: %v\n", name, err)
 			continue
