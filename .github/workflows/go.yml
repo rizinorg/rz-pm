@@ -48,7 +48,7 @@ jobs:
         run: |
           git clone https://github.com/rizinorg/rizin
           cd rizin
-          git checkout v0.4.1
+          git checkout v0.5.1
           meson --buildtype=release --prefix=${{ matrix.prefix }} ${{ matrix.meson_options }} build
           meson compile -C build
           ${{ matrix.sudo }} meson install -C build
@@ -56,8 +56,7 @@ jobs:
       - name: Add rizin dir to PATH
         if: matrix.os == 'windows-latest'
         run: |
-          Add-Content $env:GITHUB_PATH "D:\bin"
-
+          echo "D:/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Set up Go 1.19
         uses: actions/setup-go@v1
         with:
