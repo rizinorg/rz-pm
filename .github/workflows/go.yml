@@ -71,8 +71,6 @@ jobs:
       - name: Make sure jsdec is present in the database
         run: ./rz-pm list | grep -q 'Converts asm to pseudo-C code'
       - name: Install jsdec
-        run: |
-          rizin -H
-          ./rz-pm install jsdec
+        run: ./rz-pm install jsdec
       - name: Check jsdec
         run: ls $(rizin -H RZ_USER_PLUGINS) | grep core_pdd
