@@ -56,8 +56,7 @@ jobs:
       - name: Add rizin dir to PATH
         if: matrix.os == 'windows-latest'
         run: |
-          "D:\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          rizin.exe -H
+          echo "D:/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Set up Go 1.19
         uses: actions/setup-go@v1
         with:
