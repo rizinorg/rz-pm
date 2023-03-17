@@ -302,6 +302,11 @@ func main() {
 	app.Usage = "rizin package manager"
 	app.Version = "v0.1.11"
 
+	cli.AppHelpTemplate = fmt.Sprintf(`%s
+RZ_PM_SITE:
+   %s
+`, cli.AppHelpTemplate, pkg.SiteDir())
+
 	app.Flags = []cli.Flag{
 		&cli.BoolFlag{
 			Name:    flagNameDebug,
