@@ -311,6 +311,7 @@ func getInstalledPackageNames(path string) ([]InstalledPackage, error) {
 			return []InstalledPackage{}, err
 		}
 
+		v = []InstalledPackage{}
 		for _, s := range vs {
 			if s != "" {
 				v = append(v, InstalledPackage{InstalledName: s, InstalledFiles: nil})
