@@ -17,7 +17,6 @@ type Database struct {
 }
 
 var ErrRizinPackageWrongHash = errors.New("wrong hash")
-var ErrRizinPackageWrongFormat = errors.New("wrong format")
 
 const dbPath string = "db"
 
@@ -69,11 +68,16 @@ func ParsePackageFile(path string) (Package, error) {
 	}
 
 	if p.PackageName == "" || p.PackageVersion == "" || p.PackageSummary == "" {
-		return RizinPackage{}, ErrRizinPackageWrongFormat
+		return RizinPackage{}, fmt.Errorf("wrong file plugin format: name, version, and summary are mandatory")
 	}
 	if p.PackageSource != nil {
-		if p.PackageSource.URL == "" || p.PackageSource.Hash == "" || p.PackageSource.BuildSystem == "" {
-			return RizinPackage{}, ErrRizinPackageWrongFormat
+		if p.PackageSource.URL == "" || p.PackageSource.BuildSystem == "" {
+			return RizinPackage{}, fmt.Errorf("wrong file plugin format: Source URL and Build System are mandatory")
+		}
+		if !p.isGitRepo() && p.PackageSource.Hash == "" {
+			return RizinPackage{}, fmt.Errorf("wrong file plugin format: Source Hash is mandatory for non-git plugins")
+		} else if p.isGitRepo() && p.PackageSource.Hash != "" {
+			return RizinPackage{}, fmt.Errorf("wrong file plugin format: Source Hash should not be used for git plugins")
 		}
 	}
 	return p, nil

@@ -185,3 +185,30 @@ func TestUninstallSimplePackage(t *testing.T) {
 	require.NoError(t, err, "pluginsPath should be read")
 	require.Len(t, files, 0, "there should be one plugins installed")
 }
+
+func TestDownloadGitPackage(t *testing.T) {
+	p := RizinPackage{
+		PackageName:        "simple-git",
+		PackageDescription: "simple-git description",
+		PackageVersion:     "dev",
+		PackageSource: &RizinPackageSource{
+			URL:            "https://github.com/rizinorg/jsdec.git",
+			BuildSystem:    "meson",
+			Directory:      "p",
+			BuildArguments: []string{"-Djsc_folder=.."},
+		},
+	}
+
+	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
+	require.NoError(t, err, "temp path should be created")
+	// defer os.RemoveAll(tmpPath)
+
+	err = p.Download(tmpPath)
+	assert.NoError(t, err, "simple package should be downloaded")
+	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "simple-git"))
+	assert.NoError(t, err, "simple-git(jsdec) dir should be there")
+	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "simple-git", ".git"))
+	assert.NoError(t, err, "simple-git(jsdec) master branch should have been git cloned")
+	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "simple-git", "p"))
+	assert.NoError(t, err, "simple-git(jsdec)/p should be there")
+}
