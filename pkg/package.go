@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/adrg/xdg"
+	"github.com/go-git/go-git/v5"
 )
 
 type BuildSystem string
@@ -74,14 +75,15 @@ func (rp RizinPackage) Source() RizinPackageSource {
 	return *rp.PackageSource
 }
 
-// Download the source code of a package and extract it in the provided path
-func (rp RizinPackage) Download(baseArtifactsPath string) error {
-	artifactsPath := rp.artifactsPath(baseArtifactsPath)
-	err := os.MkdirAll(artifactsPath, os.FileMode(0755))
-	if err != nil {
-		return err
-	}
+func (rp RizinPackage) isGitRepo() bool {
+	return rp.PackageSource == nil || strings.HasSuffix(rp.PackageSource.URL, ".git")
+}
 
+func (rp RizinPackage) isSupportedArchiveRepo() bool {
+	return rp.PackageSource == nil || strings.HasSuffix(rp.PackageSource.URL, ".tar.gz") || strings.HasSuffix(rp.PackageSource.URL, ".tar")
+}
+
+func (rp RizinPackage) downloadTar(artifactsPath string) error {
 	fmt.Printf("Downloading %s source archive...\n", rp.PackageName)
 	client := http.Client{}
 	resp, err := client.Get(rp.PackageSource.URL)
@@ -141,6 +143,10 @@ func (rp RizinPackage) Download(baseArtifactsPath string) error {
 		}
 
 		filename := filepath.Join(artifactsPath, header.Name)
+		cleanedFilename := filepath.Clean(filename)
+		if !strings.HasPrefix(cleanedFilename, artifactsPath) {
+			return fmt.Errorf("trying to extract a file outside the base path")
+		}
 
 		switch header.Typeflag {
 		case tar.TypeDir:
@@ -169,6 +175,49 @@ func (rp RizinPackage) Download(baseArtifactsPath string) error {
 	fmt.Printf("Source code for %s downloaded and extracted.\n", rp.PackageName)
 
 	return nil
+}
+
+func (rp RizinPackage) downloadGit(artifactsPath string) error {
+	projectPath := filepath.Join(artifactsPath, rp.Name())
+	if fi, err := os.Stat(projectPath); !os.IsNotExist(err) && fi.IsDir() {
+		repo, err := git.PlainOpen(projectPath)
+		if err != nil {
+			return err
+		}
+
+		tree, err := repo.Worktree()
+		if err != nil {
+			return err
+		}
+
+		err = tree.Pull(&git.PullOptions{Progress: nil})
+		if err == nil || err == git.NoErrAlreadyUpToDate {
+			return nil
+		}
+		return err
+	} else {
+		_, err = git.PlainClone(projectPath, false, &git.CloneOptions{
+			URL: rp.PackageSource.URL,
+		})
+		return err
+	}
+}
+
+// Download the source code of a package and extract it in the provided path
+func (rp RizinPackage) Download(baseArtifactsPath string) error {
+	artifactsPath := rp.artifactsPath(baseArtifactsPath)
+	err := os.MkdirAll(artifactsPath, os.FileMode(0755))
+	if err != nil {
+		return err
+	}
+
+	if rp.isSupportedArchiveRepo() {
+		return rp.downloadTar(artifactsPath)
+	} else if rp.isGitRepo() {
+		return rp.downloadGit(artifactsPath)
+	} else {
+		return fmt.Errorf("source URL not supported! Use a .tar.gz/.tar/.git URL")
+	}
 }
 
 func (rp RizinPackage) artifactsPath(baseArtifactsPath string) string {
@@ -319,7 +368,8 @@ func (rp RizinPackage) Build(site Site) error {
 	}
 
 	srcPath := rp.sourcePath(site.GetArtifactsDir())
-	if fi, err := os.Stat(srcPath); err != nil || !fi.IsDir() {
+	fi, err := os.Stat(srcPath)
+	if rp.isGitRepo() || err != nil || !fi.IsDir() {
 		err := rp.Download(site.GetArtifactsDir())
 		if err != nil {
 			return err
