@@ -24,7 +24,7 @@ func TestEmptySite(t *testing.T) {
 	require.NoError(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
 	site, err := InitSite(tmpPath)
-	require.NoError(t, err, "site should be initialized in tmpPath")
+	require.NoError(t, err, "site should be initialized in tmpPath %s", err)
 	assert.Equal(t, tmpPath, site.GetBaseDir(), "site path should be tmpPath")
 	_, err = os.Stat(filepath.Join(tmpPath, "rz-pm-db"))
 	assert.NoError(t, err, "rz-pm database directory should be there")

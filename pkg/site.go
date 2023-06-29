@@ -82,7 +82,11 @@ func InitSite(path string) (Site, error) {
 		return &RizinSite{}, err
 	}
 
-	d, err := InitDatabase(dbSubdir)
+	rizinVersion, err := getRizinVersion()
+	if err != nil {
+		return &RizinSite{}, err
+	}
+	d, err := InitDatabase(dbSubdir, rizinVersion)
 	if err != nil {
 		return &RizinSite{}, err
 	}
@@ -246,6 +250,19 @@ func (s *RizinSite) CleanPackage(pkg Package) error {
 
 func (s *RizinSite) Remove() error {
 	return os.RemoveAll(s.Path)
+}
+
+func getRizinVersion() (string, error) {
+	if _, err := exec.LookPath("rizin"); err != nil {
+		return "", fmt.Errorf("rizin does not seem to be installed on your system. Make sure it is installed and in PATH")
+	}
+	cmd := exec.Command("rizin", "-H", "RZ_VERSION")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimRight(string(out), "\r\n"), nil
 }
 
 func getRizinLibPath() (string, error) {

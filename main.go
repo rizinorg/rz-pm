@@ -299,7 +299,7 @@ func main() {
 
 	app := cli.NewApp()
 	app.Name = "rz-pm"
-	app.Usage = "rizin package manager"
+	app.Usage = "Rizin package manager"
 	app.Version = "v0.2.0"
 
 	cli.AppHelpTemplate = fmt.Sprintf(`%s

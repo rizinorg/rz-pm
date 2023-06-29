@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/storer"
 	"gopkg.in/yaml.v2"
 )
 
@@ -20,10 +24,10 @@ var ErrRizinPackageWrongHash = errors.New("wrong hash")
 
 const dbPath string = "db"
 
-func InitDatabase(path string) (Database, error) {
+func InitDatabase(path string, rizinVersion string) (Database, error) {
 	d := Database{path}
 
-	err := d.updateDatabase()
+	err := d.updateDatabase(rizinVersion)
 	if err != nil {
 		return Database{}, fmt.Errorf("could not download the rz-pm database")
 	}
@@ -31,7 +35,74 @@ func InitDatabase(path string) (Database, error) {
 	return d, nil
 }
 
-func (d Database) updateDatabase() error {
+func getBranchName(s string) plumbing.ReferenceName {
+	return plumbing.ReferenceName("refs/remotes/origin/v" + s)
+}
+
+func remoteBranches(s storer.ReferenceStorer) (storer.ReferenceIter, error) {
+	refs, err := s.IterReferences()
+	if err != nil {
+		return nil, err
+	}
+
+	return storer.NewReferenceFilteredIter(func(ref *plumbing.Reference) bool {
+		return ref.Name().IsRemote()
+	}, refs), nil
+}
+
+func (d Database) switchTag(repo *git.Repository, w *git.Worktree, rizinVersion string) (string, error) {
+	branches, err := remoteBranches(repo.Storer)
+	if err != nil {
+		return "", err
+	}
+
+	versionPieces := strings.SplitN(rizinVersion, ".", 3)
+
+	var switchBranch string
+	var switchHash plumbing.Hash
+	var switchBranchPrio int = math.MaxInt
+	_ = branches.ForEach(func(b *plumbing.Reference) error {
+		pieces := strings.Split(b.Name().String(), "/")
+		branchName := pieces[len(pieces)-1]
+		if branchName == "v"+rizinVersion && switchBranchPrio > 0 {
+			switchBranch = branchName
+			switchBranchPrio = 0
+			switchHash = b.Hash()
+		} else if branchName == "v"+versionPieces[0]+"."+versionPieces[1] && switchBranchPrio > 1 {
+			switchBranch = branchName
+			switchBranchPrio = 1
+			switchHash = b.Hash()
+		} else if branchName == "v"+versionPieces[0] && switchBranchPrio > 2 {
+			switchBranch = branchName
+			switchBranchPrio = 2
+			switchHash = b.Hash()
+		}
+		return nil
+	})
+
+	if switchBranchPrio == math.MaxInt {
+		return "", fmt.Errorf("could not find a tag for version %s", rizinVersion)
+	}
+
+	localBranchName := plumbing.ReferenceName("refs/heads/" + switchBranch)
+	create := false
+	if _, err := repo.Storer.Reference(localBranchName); err != nil {
+		ref := plumbing.NewHashReference(localBranchName, switchHash)
+		err = repo.Storer.SetReference(ref)
+		if err != nil {
+			return "", err
+		}
+		create = true
+	}
+
+	err = w.Checkout(&git.CheckoutOptions{Branch: localBranchName, Create: create})
+	if err != nil {
+		return "", err
+	}
+	return switchBranch, nil
+}
+
+func (d Database) updateDatabase(rizinVersion string) error {
 	repo, err := git.PlainOpen(d.Path)
 	if err == git.ErrRepositoryNotExists {
 		log.Printf("Downloading rz-pm-db repository...\n")
@@ -52,6 +123,29 @@ func (d Database) updateDatabase() error {
 	if err != git.NoErrAlreadyUpToDate {
 		return err
 	}
+
+	h, err := repo.Head()
+	if err != nil {
+		return err
+	}
+
+	branchName := h.Name().String()
+	branchNamePieces := strings.Split(branchName, "/")
+	branchName = strings.TrimLeft(branchNamePieces[len(branchNamePieces)-1], "v")
+
+	if !strings.HasPrefix(rizinVersion, branchName) {
+		tagName, err := d.switchTag(repo, w, rizinVersion)
+		if err != nil {
+			log.Printf("Failed to switch rz-pm-db to version %s, default to main branch", rizinVersion)
+			err = w.Checkout(&git.CheckoutOptions{Branch: "refs/heads/master"})
+			if err != nil {
+				return err
+			}
+		} else {
+			log.Printf("Switched rz-pm-db to %s...\n", tagName)
+		}
+	}
+
 	return nil
 }
 
