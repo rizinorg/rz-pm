@@ -85,6 +85,9 @@ func (s FakeSite) GetPackageFromFile(filename string) (Package, error) {
 func (s FakeSite) GetBaseDir() string {
 	return ""
 }
+func (s FakeSite) RizinVersion() string {
+	return "0.5.2"
+}
 func (s FakeSite) GetArtifactsDir() string {
 	return s.ArtifactsDir
 }

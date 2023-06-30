@@ -46,13 +46,20 @@ func listPackages(c *cli.Context, installed bool) error {
 		return err
 	}
 
-	for _, pkg := range packages {
+	green := color.New(color.Bold, color.FgGreen).SprintFunc()
+	red := color.New(color.Bold, color.FgRed).SprintFunc()
+	for _, myPkg := range packages {
 		info := ""
-		if site.IsPackageInstalled(pkg) {
-			green := color.New(color.Bold, color.FgGreen).SprintFunc()
+		if site.IsPackageInstalled(myPkg) {
 			info = green(" [installed]")
+			installedPackage, err := site.GetInstalledPackage(myPkg.Name())
+			if err == nil && installedPackage.RizinVersion != nil {
+				if pkg.GetMajorMinorVersion(site.RizinVersion()) != *installedPackage.RizinVersion {
+					info += red(fmt.Sprintf(" [for rizin v%s]", *installedPackage.RizinVersion))
+				}
+			}
 		}
-		fmt.Printf("%s: %s%s\n", pkg.Name(), pkg.Summary(), info)
+		fmt.Printf("%s: %s%s\n", myPkg.Name(), myPkg.Summary(), info)
 	}
 	return nil
 }
