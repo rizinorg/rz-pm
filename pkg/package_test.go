@@ -79,6 +79,9 @@ func (s FakeSite) IsPackageInstalled(pkg Package) bool {
 func (s FakeSite) GetPackage(name string) (Package, error) {
 	return RizinPackage{}, nil
 }
+func (s FakeSite) GetInstalledPackage(name string) (InstalledPackage, error) {
+	return InstalledPackage{}, nil
+}
 func (s FakeSite) GetPackageFromFile(filename string) (Package, error) {
 	return RizinPackage{}, nil
 }
@@ -208,10 +211,10 @@ func TestDownloadGitPackage(t *testing.T) {
 
 	err = p.Download(tmpPath)
 	assert.NoError(t, err, "simple package should be downloaded")
-	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "simple-git"))
+	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "jsdec"))
 	assert.NoError(t, err, "simple-git(jsdec) dir should be there")
-	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "simple-git", ".git"))
+	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "jsdec", ".git"))
 	assert.NoError(t, err, "simple-git(jsdec) master branch should have been git cloned")
-	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "simple-git", "p"))
+	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "jsdec", "p"))
 	assert.NoError(t, err, "simple-git(jsdec)/p should be there")
 }
