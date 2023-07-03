@@ -190,14 +190,15 @@ func (rp RizinPackage) downloadGit(artifactsPath string) error {
 			return err
 		}
 
-		err = tree.Pull(&git.PullOptions{Progress: nil})
+		err = tree.Pull(&git.PullOptions{Progress: nil, RecurseSubmodules: git.DefaultSubmoduleRecursionDepth})
 		if err == nil || err == git.NoErrAlreadyUpToDate {
 			return nil
 		}
 		return err
 	} else {
 		_, err = git.PlainClone(projectPath, false, &git.CloneOptions{
-			URL: rp.PackageSource.URL,
+			URL:               rp.PackageSource.URL,
+			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
 		return err
 	}
