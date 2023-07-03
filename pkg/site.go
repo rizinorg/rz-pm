@@ -245,7 +245,7 @@ func (s *RizinSite) UninstallPackage(pkg Package) error {
 }
 
 func (s *RizinSite) CleanPackage(pkg Package) error {
-	pkgArtifactsPath := filepath.Join(s.GetArtifactsDir(), pkg.Name())
+	pkgArtifactsPath := filepath.Join(s.GetArtifactsDir(), pkg.Name(), pkg.Version())
 	_, err := os.Stat(pkgArtifactsPath)
 	if err != nil {
 		return fmt.Errorf("package %s does not have any build artifacts", pkg.Name())
