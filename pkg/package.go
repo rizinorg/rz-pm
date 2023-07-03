@@ -178,7 +178,11 @@ func (rp RizinPackage) downloadTar(artifactsPath string) error {
 }
 
 func (rp RizinPackage) downloadGit(artifactsPath string) error {
-	projectPath := filepath.Join(artifactsPath, rp.Name())
+	gitProjectNamePieces := strings.Split(rp.PackageSource.URL, "/")
+	gitProjectName := gitProjectNamePieces[len(gitProjectNamePieces)-1]
+	gitProjectName = strings.TrimSuffix(gitProjectName, ".git")
+
+	projectPath := filepath.Join(artifactsPath, gitProjectName)
 	if fi, err := os.Stat(projectPath); !os.IsNotExist(err) && fi.IsDir() {
 		repo, err := git.PlainOpen(projectPath)
 		if err != nil {
