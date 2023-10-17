@@ -39,6 +39,10 @@ jobs:
           - goarch: arm64
             asset_arch: arm64
           - goos: linux
+            goarch: arm
+            asset_arch: arm7
+            goarm: 7
+          - goos: linux
             goarch: ppc64le
             asset_arch: ppc64le
           - goos: linux
@@ -58,6 +62,7 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
       - name: Upload artifact
         if: matrix.goos != 'windows'
         uses: actions/upload-release-asset@v1
