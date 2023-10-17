@@ -62,6 +62,9 @@ type CloneOptions struct {
 	// within, using their default settings. This option is ignored if the
 	// cloned repository does not have a worktree.
 	RecurseSubmodules SubmoduleRescursivity
+	// ShallowSubmodules limit cloning submodules to the 1 level of depth.
+	// It matches the git command --shallow-submodules.
+	ShallowSubmodules bool
 	// Progress is where the human readable information sent by the server is
 	// stored, if nil nothing is stored and the capability (if supported)
 	// no-progress, is sent to the server to avoid send this information.
@@ -495,10 +498,21 @@ type CommitOptions struct {
 	// commit will not be signed. The private key must be present and already
 	// decrypted.
 	SignKey *openpgp.Entity
+	// Amend will create a new commit object and replace the commit that HEAD currently
+	// points to. Cannot be used with All nor Parents.
+	Amend bool
 }
 
 // Validate validates the fields and sets the default values.
 func (o *CommitOptions) Validate(r *Repository) error {
+	if o.All && o.Amend {
+		return errors.New("all and amend cannot be used together")
+	}
+
+	if o.Amend && len(o.Parents) > 0 {
+		return errors.New("parents cannot be used with amend")
+	}
+
 	if o.Author == nil {
 		if err := o.loadConfigAuthorAndCommitter(r); err != nil {
 			return err
