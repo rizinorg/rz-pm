@@ -48,6 +48,13 @@ jobs:
           - goos: linux
             goarch: s390x
             asset_arch: s390x
+          - goos: android
+            goarch: arm64
+            asset_arch: arm64
+          - goos: android
+            goarch: arm
+            asset_arch: arm7
+            goarm: 7
 
     steps:
       - name: Set up Go 1.19
