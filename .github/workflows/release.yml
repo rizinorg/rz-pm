@@ -32,12 +32,14 @@ jobs:
     strategy:
       matrix:
         goos: [windows, darwin, freebsd, openbsd, netbsd, linux, android]
-        goarch: [amd64, arm64]
+        goarch: [amd64, arm64, arm]
         include:
           - goarch: amd64
             asset_arch: x86_64
           - goarch: arm64
             asset_arch: arm64
+          - goarch: arm
+            asset_arch: arm
           - goos: linux
             goarch: arm
             asset_arch: arm7
@@ -51,7 +53,9 @@ jobs:
           - goos: android
             goarch: arm64
             asset_arch: arm64
-
+          - goos: android
+            goarch: arm
+            asset_arch: arm
     steps:
       - name: Set up Go 1.19
         uses: actions/setup-go@v1
@@ -60,12 +64,24 @@ jobs:
         id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@v1
+      - name: Install Android NDK
+        run: |
+          curl -L https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip -o android-ndk.zip
+          unzip android-ndk.zip -d $HOME/android-ndk
+          export ANDROID_NDK_HOME=$HOME/android-ndk/android-ndk-r21e
+          export PATH=$PATH:$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
+        shell: bash
       - name: Build the Go binary
-        run: go build
+        run: |
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            env GOOS=windows GOARCH=amd64 go build
+          elif [ "${{ matrix.goos }}" = "android" ]; then
+            env GOOS=android GOARCH=arm CGO_ENABLED=1 CC=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang go build
+          else
+            go build
+          fi
         env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          GOARM: ${{ matrix.goarm }}
+          CGO_ENABLED: 1
       - name: Upload artifact
         if: matrix.goos != 'windows'
         uses: actions/upload-release-asset@v1
