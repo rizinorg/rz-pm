@@ -81,9 +81,6 @@ jobs:
             go build
           fi
         env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          GOARM: ${{ matrix.goarm }}
           CGO_ENABLED: 1
       - name: Upload artifact
         if: matrix.goos != 'windows'
