@@ -34,7 +34,7 @@ jobs:
     strategy:
       matrix:
         goos: [windows, darwin, freebsd, openbsd, netbsd, linux, android]
-        goarch: [amd64, arm64, arm]
+        goarch: [amd64, arm64]
         include:
           - goos: linux
             goarch: arm
