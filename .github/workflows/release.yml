@@ -1,10 +1,8 @@
 name: Release
-
 on:
   push:
     tags:
       - v[0-9].[0-9]+.[0-9]+
-
 jobs:
   create_release:
     name: create_release
@@ -34,8 +32,14 @@ jobs:
     strategy:
       matrix:
         goos: [windows, darwin, freebsd, openbsd, netbsd, linux, android]
-        goarch: [amd64, arm64]
+        goarch: [amd64, arm64, arm]
         include:
+          - goarch: amd64
+            asset_arch: x86_64
+          - goarch: arm64
+            asset_arch: arm64
+          - goarch: arm
+            asset_arch: arm
           - goos: linux
             goarch: arm
             asset_arch: arm7
@@ -52,7 +56,6 @@ jobs:
           - goos: android
             goarch: arm
             asset_arch: arm
-
     steps:
       - name: Set up Go 1.19
         uses: actions/setup-go@v1
@@ -78,11 +81,7 @@ jobs:
             go build
           fi
         env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          GOARM: ${{ matrix.goarm }}
           CGO_ENABLED: 1
-
       - name: Upload artifact
         if: matrix.goos != 'windows'
         uses: actions/upload-release-asset@v1
@@ -93,7 +92,6 @@ jobs:
           asset_path: ./rz-pm
           asset_name: rz-pm-${{ matrix.goos }}-${{ matrix.asset_arch }}
           asset_content_type: application/octet-stream
-
       - name: Upload artifact (windows)
         if: matrix.goos == 'windows'
         uses: actions/upload-release-asset@v1
@@ -102,5 +100,5 @@ jobs:
         with:
           upload_url: ${{ needs.create_release.outputs.upload_url }}
           asset_path: ./rz-pm.exe
-          asset_name: rz-pm-${{ matrix.goos }}-${{ matrix.goarch }}.exe
+          asset_name: rz-pm-${{ matrix.goos }}-${{ matrix.asset_arch }}.exe
           asset_content_type: application/octet-stream
