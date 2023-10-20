@@ -19,11 +19,11 @@ jobs:
           - name: macos
             os: macos-latest
             prefix: /usr/local
-            sudo: sudo
+            sudo: sudo env "PATH=$PATH"
           - name: ubuntu
             os: ubuntu-22.04
             prefix: /usr
-            sudo: sudo
+            sudo: sudo env "PATH=$PATH"
           - name: windows
             os: windows-latest
             prefix: D:\
