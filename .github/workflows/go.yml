@@ -31,17 +31,14 @@ jobs:
             meson_options: -Dportable=true -Db_vscrt=static_from_buildtype
 
     steps:
-      - name: Install python
-        if: matrix.os == 'ubuntu-22.04'
-        run: sudo apt-get --assume-yes install python3-wheel python3-setuptools python3-dev ninja-build meson
-      - uses: actions/setup-python@v2
-        if: matrix.os == 'windows-latest'
-      - name: Install dependencies (Windows)
-        if: matrix.os != 'ubuntu-22.04'
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4.7.1
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install meson ninja
-      - uses: actions/checkout@v2
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
         if: matrix.os == 'windows-latest'
       - name: Install Rizin
