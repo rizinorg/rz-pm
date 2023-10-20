@@ -2,7 +2,8 @@ name: Release
 on:
   push:
     branches:
-      - test-release*
+      - "test-release*"
+      - "*dist*"
     tags:
       - v[0-9].[0-9]+.[0-9]+
 jobs:
@@ -69,11 +70,12 @@ jobs:
   create_release:
     name: create_release
     runs-on: ubuntu-22.04
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || contains(github.ref, 'test-release')
     needs: [build]
     steps:
       - uses: actions/checkout@v2
       - name: Check version matches
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           [[ "$(grep app.Version main.go | sed -r 's/.*\"(v[0-9\.]+)\"/\1/')" =~ "${{ github.ref_name }}" ]]
       - uses: actions/download-artifact@v3
@@ -82,7 +84,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: ${{ github.ref }}
           name: Release ${{ github.ref }}
           draft: true
           prerelease: false
