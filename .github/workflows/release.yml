@@ -6,32 +6,9 @@ on:
     tags:
       - v[0-9].[0-9]+.[0-9]+
 jobs:
-  create_release:
-    name: create_release
-    runs-on: ubuntu-22.04
-    if: startsWith(github.ref, 'refs/tags/')
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Check version matches
-        run: |
-          [[ "$(grep app.Version main.go | sed -r 's/.*\"(v[0-9\.]+)\"/\1/')" =~ "${{ github.ref_name }}" ]]
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: true
-          prerelease: false
-
   build:
     name: build-rz-pm
     runs-on: ubuntu-22.04
-    needs: create_release
     strategy:
       matrix:
         goos: [windows, darwin, freebsd, openbsd, netbsd, linux, android]
@@ -81,23 +58,33 @@ jobs:
           GOARM: ${{ matrix.goarm }}
           CGO_ENABLED: ${{ matrix.cgo_enabled }}
           CC: ${{ matrix.cc }}
-      - name: Upload artifact
-        if: matrix.goos != 'windows' && startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Rename rz-pm
+        run: mv ./rz-pm${{ matrix.goos == 'windows' && '.exe' || '' }} ./rz-pm-${{ matrix.goos }}-${{ matrix.asset_arch }}${{ matrix.goos == 'windows' && '.exe' || '' }}
+      - name: Upload rz-pm build
+        uses: actions/upload-artifact@v3
         with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: ./rz-pm
-          asset_name: rz-pm-${{ matrix.goos }}-${{ matrix.asset_arch }}
-          asset_content_type: application/octet-stream
-      - name: Upload artifact (windows)
-        if: matrix.goos == 'windows' && startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: rz-pm-${{ matrix.goos }}-${{ matrix.asset_arch }}
+          path: ./rz-pm-${{ matrix.goos }}-${{ matrix.asset_arch }}${{ matrix.goos == 'windows' && '.exe' || '' }}
+
+  create_release:
+    name: create_release
+    runs-on: ubuntu-22.04
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check version matches
+        run: |
+          [[ "$(grep app.Version main.go | sed -r 's/.*\"(v[0-9\.]+)\"/\1/')" =~ "${{ github.ref_name }}" ]]
+      - uses: actions/download-artifact@v3
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: ./rz-pm.exe
-          asset_name: rz-pm-${{ matrix.goos }}-${{ matrix.asset_arch }}.exe
-          asset_content_type: application/octet-stream
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ github.ref }}
+          name: Release ${{ github.ref }}
+          draft: true
+          prerelease: false
+          files: |
+            ./rz-pm-*/*
