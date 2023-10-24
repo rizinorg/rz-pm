@@ -47,7 +47,7 @@ jobs:
           cd rizin
           git checkout v0.6.3
           meson --buildtype=release --prefix=${{ matrix.prefix }} ${{ matrix.meson_options }} build
-          meson compile -C build
+          meson compile ${{ matrix.os == 'windows-latest' && '-j1' || '' }} -C build
           ${{ matrix.sudo }} meson install -C build
           cd ..
       - name: Add rizin dir to PATH
