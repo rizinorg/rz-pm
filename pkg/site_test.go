@@ -71,11 +71,11 @@ version: 0.0.1
 summary: simple description
 source:
   url: https://github.com/rizinorg/jsdec
-  hash: 5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d
+  hash: 0f966e3c2c649cafa21c4466b783330c2b21baea
   build_system: meson
   build_arguments:
-    - -Djsc_folder=..
-  directory: jsdec-0.4.0/p
+    - -Dstandalone=false
+  directory: jsdec-0.7.0/
 `)
 
 	pkg, err := ParsePackageFile(tmpFile.Name())
@@ -84,10 +84,10 @@ source:
 	assert.Equal(t, "0.0.1", pkg.Version())
 	assert.Equal(t, "simple description", pkg.Summary())
 	assert.Equal(t, "https://github.com/rizinorg/jsdec", pkg.Source().URL)
-	assert.Equal(t, "5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d", pkg.Source().Hash)
+	assert.Equal(t, "0f966e3c2c649cafa21c4466b783330c2b21baea", pkg.Source().Hash)
 	assert.Equal(t, Meson, pkg.Source().BuildSystem)
-	assert.Contains(t, pkg.Source().BuildArguments, "-Djsc_folder=..")
-	assert.Equal(t, "jsdec-0.4.0/p", pkg.Source().Directory)
+	assert.Contains(t, pkg.Source().BuildArguments, "-Dstandalone=false")
+	assert.Equal(t, "jsdec-0.7.0/", pkg.Source().Directory)
 }
 
 func TestWrongPackageFormat(t *testing.T) {
@@ -98,23 +98,23 @@ func TestWrongPackageFormat(t *testing.T) {
 	f1 := `version: 0.0.1
 summary: simple description
 source:
-  url: https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz
-  hash: 5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d
+  url: https://github.com/rizinorg/jsdec/archive/refs/tags/v0.7.0.tar.gz
+  hash: 0f966e3c2c649cafa21c4466b783330c2b21baea
   build_system: meson
   build_arguments:
-    - -Djsc_folder=..
-  directory: jsdec-0.4.0/p
+    - -Dstandalone=false
+  directory: jsdec-0.7.0/
 `
 
 	f2 := `name: simple
 summary: simple description
 source:
-  url: https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz
-  hash: 5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d
+  url: https://github.com/rizinorg/jsdec/archive/refs/tags/v0.7.0.tar.gz
+  hash: 0f966e3c2c649cafa21c4466b783330c2b21baea
   build_system: meson
   build_arguments:
-    - -Djsc_folder=..
-  directory: jsdec-0.4.0/p
+    - -Dstandalone=false
+  directory: jsdec-0.7.0/
 `
 
 	f3 := `name: simple
