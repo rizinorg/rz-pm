@@ -44,7 +44,7 @@ func TestWrongHash(t *testing.T) {
 		PackageVersion:     "0.0.1",
 		PackageSource: &RizinPackageSource{
 			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.7.0.tar.gz",
-			Hash:           "ef73ccc609c7c0b010fc33ffac51d9352451515e355684ca9f01883b4f4db5eb",
+			Hash:           "sha256:2b2587dd117d48b284695416a7349a21c4dd30fbe75cc5890ed74945c9b474aa",
 			BuildSystem:    "meson",
 			Directory:      "p",
 			BuildArguments: []string{"-Djsc_folder=.."},
@@ -121,7 +121,7 @@ func TestInstallSimplePackage(t *testing.T) {
 		PackageVersion:     "0.0.1",
 		PackageSource: &RizinPackageSource{
 			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.7.0.tar.gz",
-			Hash:           "49159182c81e74ca846c5230ee6f0a2b4be0639ce02fd1214e86360a65bfc9a7",
+			Hash:           "2b2587dd117d48b284695416a7349a21c4dd30fbe75cc5890ed74945c9b474ea",
 			BuildSystem:    "meson",
 			Directory:      "jsdec-0.7.0",
 			BuildArguments: []string{"-Drizin_plugdir="},
@@ -161,7 +161,7 @@ func TestUninstallSimplePackage(t *testing.T) {
 		PackageVersion:     "0.0.1",
 		PackageSource: &RizinPackageSource{
 			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.7.0.tar.gz",
-			Hash:           "49159182c81e74ca846c5230ee6f0a2b4be0639ce02fd1214e86360a65bfc9a7",
+			Hash:           "2b2587dd117d48b284695416a7349a21c4dd30fbe75cc5890ed74945c9b474ea",
 			BuildSystem:    "meson",
 			Directory:      "jsdec-0.7.0",
 			BuildArguments: []string{"-Drizin_plugdir="},
@@ -201,7 +201,7 @@ func TestDownloadGitPackage(t *testing.T) {
 			URL:            "https://github.com/rizinorg/jsdec.git",
 			BuildSystem:    "meson",
 			Directory:      "",
-			BuildArguments: []string{},
+			BuildArguments: []string{"-Dstandalone=false"},
 		},
 	}
 
@@ -215,6 +215,6 @@ func TestDownloadGitPackage(t *testing.T) {
 	assert.NoError(t, err, "simple-git(jsdec) dir should be there")
 	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "jsdec", ".git"))
 	assert.NoError(t, err, "simple-git(jsdec) master branch should have been git cloned")
-	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "jsdec", "p"))
-	assert.NoError(t, err, "simple-git(jsdec)/p should be there")
+	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "jsdec", "c"))
+	assert.NoError(t, err, "simple-git(jsdec)c should be there")
 }

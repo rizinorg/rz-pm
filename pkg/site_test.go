@@ -99,7 +99,7 @@ func TestWrongPackageFormat(t *testing.T) {
 summary: simple description
 source:
   url: https://github.com/rizinorg/jsdec/archive/refs/tags/v0.7.0.tar.gz
-  hash: 0f966e3c2c649cafa21c4466b783330c2b21baea
+  hash: sha256:2b2587dd117d48b284695416a7349a21c4dd30fbe75cc5890ed74945c9b474ea
   build_system: meson
   build_arguments:
     - -Dstandalone=false
@@ -110,7 +110,7 @@ source:
 summary: simple description
 source:
   url: https://github.com/rizinorg/jsdec/archive/refs/tags/v0.7.0.tar.gz
-  hash: 0f966e3c2c649cafa21c4466b783330c2b21baea
+  hash: sha256:2b2587dd117d48b284695416a7349a21c4dd30fbe75cc5890ed74945c9b474ea
   build_system: meson
   build_arguments:
     - -Dstandalone=false
