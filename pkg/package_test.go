@@ -43,8 +43,8 @@ func TestWrongHash(t *testing.T) {
 		PackageDescription: "simple description",
 		PackageVersion:     "0.0.1",
 		PackageSource: &RizinPackageSource{
-			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz",
-			Hash:           "sha256:6afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d",
+			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.7.0.tar.gz",
+			Hash:           "ef73ccc609c7c0b010fc33ffac51d9352451515e355684ca9f01883b4f4db5eb",
 			BuildSystem:    "meson",
 			Directory:      "p",
 			BuildArguments: []string{"-Djsc_folder=.."},
@@ -120,11 +120,11 @@ func TestInstallSimplePackage(t *testing.T) {
 		PackageDescription: "simple description",
 		PackageVersion:     "0.0.1",
 		PackageSource: &RizinPackageSource{
-			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.5.0.tar.gz",
-			Hash:           "ef73ccc609c7c0b010fc33ffac51d9352451515e355684ca9f01883b4f4db5eb",
+			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.7.0.tar.gz",
+			Hash:           "49159182c81e74ca846c5230ee6f0a2b4be0639ce02fd1214e86360a65bfc9a7",
 			BuildSystem:    "meson",
-			Directory:      "jsdec-0.5.0/p",
-			BuildArguments: []string{"-Djsc_folder=..", "-Drizin_plugdir="},
+			Directory:      "jsdec-0.7.0",
+			BuildArguments: []string{"-Drizin_plugdir="},
 		},
 	}
 
@@ -135,7 +135,7 @@ func TestInstallSimplePackage(t *testing.T) {
 	pluginsPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest-install")
 	require.NoError(t, err, "install path should be created")
 	defer os.RemoveAll(pluginsPath)
-	p.PackageSource.BuildArguments[1] += pluginsPath
+	p.PackageSource.BuildArguments[0] += pluginsPath
 
 	err = p.Download(tmpPath)
 	require.NoError(t, err, "package should be downloaded")
@@ -160,11 +160,11 @@ func TestUninstallSimplePackage(t *testing.T) {
 		PackageDescription: "simple description",
 		PackageVersion:     "0.0.1",
 		PackageSource: &RizinPackageSource{
-			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.5.0.tar.gz",
-			Hash:           "ef73ccc609c7c0b010fc33ffac51d9352451515e355684ca9f01883b4f4db5eb",
+			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.7.0.tar.gz",
+			Hash:           "49159182c81e74ca846c5230ee6f0a2b4be0639ce02fd1214e86360a65bfc9a7",
 			BuildSystem:    "meson",
-			Directory:      "jsdec-0.5.0/p",
-			BuildArguments: []string{"-Djsc_folder=..", "-Drizin_plugdir="},
+			Directory:      "jsdec-0.7.0",
+			BuildArguments: []string{"-Drizin_plugdir="},
 		},
 	}
 
@@ -175,7 +175,7 @@ func TestUninstallSimplePackage(t *testing.T) {
 	pluginsPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest-install")
 	require.NoError(t, err, "install path should be created")
 	defer os.RemoveAll(pluginsPath)
-	p.PackageSource.BuildArguments[1] += pluginsPath
+	p.PackageSource.BuildArguments[0] += pluginsPath
 
 	err = p.Download(tmpPath)
 	require.NoError(t, err, "package should be downloaded")
@@ -200,8 +200,8 @@ func TestDownloadGitPackage(t *testing.T) {
 		PackageSource: &RizinPackageSource{
 			URL:            "https://github.com/rizinorg/jsdec.git",
 			BuildSystem:    "meson",
-			Directory:      "p",
-			BuildArguments: []string{"-Djsc_folder=.."},
+			Directory:      "",
+			BuildArguments: []string{},
 		},
 	}
 
