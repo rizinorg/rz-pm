@@ -5,3 +5,5 @@ rz-pm
 rz-pm
 
 coverage.txt
+
+__debug_.*

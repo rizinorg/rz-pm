@@ -16,7 +16,12 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const debugEnvVar = "RZPM_DEBUG"
+const (
+	debugEnvVar     = "RZPM_DEBUG"
+	flagNameDebug   = "debug"
+	flagSkipUpgrade = "skip-upgrade"
+	flagUpdateDB    = "update-db"
+)
 
 func setDebug(value bool) {
 	if value {
@@ -32,7 +37,7 @@ func listPackages(c *cli.Context, installed bool) error {
 		return fmt.Errorf("wrong usage of list command")
 	}
 
-	site, err := pkg.InitSite(pkg.SiteDir())
+	site, err := pkg.InitSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
 	if err != nil {
 		return err
 	}
@@ -79,7 +84,7 @@ func infoPackage(c *cli.Context) error {
 		return fmt.Errorf("wrong usage of info command")
 	}
 
-	site, err := pkg.InitSite(pkg.SiteDir())
+	site, err := pkg.InitSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
 	if err != nil {
 		return err
 	}
@@ -203,7 +208,7 @@ func installPackages(c *cli.Context) error {
 			cli.ShowCommandHelp(c, "install")
 			return fmt.Errorf("wrong usage of install command")
 		}
-		site, err := pkg.InitSite(pkg.SiteDir())
+		site, err := pkg.InitSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
 		if err != nil {
 			return err
 		}
@@ -241,7 +246,7 @@ func uninstallPackages(c *cli.Context) error {
 			return fmt.Errorf("wrong usage of uninstall command")
 		}
 
-		site, err := pkg.InitSite(pkg.SiteDir())
+		site, err := pkg.InitSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
 		if err != nil {
 			return err
 		}
@@ -271,7 +276,7 @@ func cleanPackage(c *cli.Context) error {
 		return fmt.Errorf("wrong usage of clean command")
 	}
 
-	site, err := pkg.InitSite(pkg.SiteDir())
+	site, err := pkg.InitSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
 	if err != nil {
 		return err
 	}
@@ -295,9 +300,6 @@ func cleanPackage(c *cli.Context) error {
 }
 
 func main() {
-	const flagNameDebug = "debug"
-	const flagSkipUpgrade = "skip-upgrade"
-
 	cli.VersionFlag = &cli.BoolFlag{
 		Name:    "print-version",
 		Aliases: []string{"V"},
@@ -323,6 +325,11 @@ RZ_PM_SITE:
 		&cli.BoolFlag{
 			Name:  flagSkipUpgrade,
 			Usage: "skip auto-upgrade on start",
+		},
+		&cli.BoolFlag{
+			Name:  flagUpdateDB,
+			Usage: "Update the DB?",
+			Value: true,
 		},
 	}
 

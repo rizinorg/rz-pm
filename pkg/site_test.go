@@ -23,7 +23,7 @@ func TestEmptySite(t *testing.T) {
 	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
 	require.NoError(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
-	site, err := InitSite(tmpPath)
+	site, err := InitSite(tmpPath, true)
 	require.NoError(t, err, "site should be initialized in tmpPath %s", err)
 	assert.Equal(t, tmpPath, site.GetBaseDir(), "site path should be tmpPath")
 	_, err = os.Stat(filepath.Join(tmpPath, "rz-pm-db"))
@@ -38,9 +38,9 @@ func TestExistingSite(t *testing.T) {
 	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
 	require.Nil(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
-	_, err = InitSite(tmpPath)
+	_, err = InitSite(tmpPath, true)
 	require.Nil(t, err, "site should be initialized when dir is empty")
-	_, err = InitSite(tmpPath)
+	_, err = InitSite(tmpPath, true)
 	assert.Nil(t, err, "site should be initialized even when dir is already initialized")
 	_, err = os.Stat(filepath.Join(tmpPath, "rz-pm-db", "README.md"))
 	assert.Nil(t, err, "rz-pm-db repository should be downloaded")
@@ -52,7 +52,7 @@ func TestListPackages(t *testing.T) {
 	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
 	require.Nil(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
-	site, err := InitSite(tmpPath)
+	site, err := InitSite(tmpPath, true)
 	require.Nil(t, err, "site should be initialized when dir is empty")
 
 	packages, err := site.ListAvailablePackages()
@@ -176,7 +176,7 @@ func TestListInstalledPackages(t *testing.T) {
 	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
 	require.Nil(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
-	site, err := InitSite(tmpPath)
+	site, err := InitSite(tmpPath, true)
 	require.Nil(t, err, "site should be initialized when dir is empty")
 
 	pkg := FakePackage{myName: "jsdec"}
