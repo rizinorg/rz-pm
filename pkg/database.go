@@ -24,12 +24,14 @@ var ErrRizinPackageWrongHash = errors.New("wrong hash")
 
 const dbPath string = "db"
 
-func InitDatabase(path string, rizinVersion string) (Database, error) {
+func InitDatabase(path string, rizinVersion string, updateDB bool) (Database, error) {
 	d := Database{path}
 
-	err := d.updateDatabase(rizinVersion)
-	if err != nil {
-		return Database{}, fmt.Errorf("could not download the rz-pm database")
+	if updateDB {
+		err := d.updateDatabase(rizinVersion)
+		if err != nil {
+			return Database{}, fmt.Errorf("could not download the rz-pm database")
+		}
 	}
 
 	return d, nil

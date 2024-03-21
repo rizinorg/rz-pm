@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,7 +26,17 @@ func SiteDir() string {
 	return filepath.Join(xdg.DataHome, "rz-pm", "site")
 }
 
-const RZPM_DB_REPO_URL = "https://github.com/rizinorg/rz-pm-db"
+var RZPM_DB_REPO_URL string
+
+func init() {
+	dbURL := os.Getenv("RZPM_DB_REPO_URL")
+	if dbURL != "" {
+		log.Printf("Using custom rz-pm-db Git repo: %s\n", dbURL)
+		RZPM_DB_REPO_URL = dbURL
+	} else {
+		RZPM_DB_REPO_URL = "https://github.com/rizinorg/rz-pm-db"
+	}
+}
 
 type Site interface {
 	ListAvailablePackages() ([]Package, error)
@@ -64,7 +75,7 @@ const dbDir string = "rz-pm-db"
 const artifactsDir string = "artifacts"
 const installedFile string = "installed"
 
-func InitSite(path string) (Site, error) {
+func InitSite(path string, updateDB bool) (Site, error) {
 	// create the filesystem structure
 	dbSubdir := filepath.Join(path, dbDir)
 	artifactsSubdir := filepath.Join(path, artifactsDir)
@@ -90,7 +101,7 @@ func InitSite(path string) (Site, error) {
 		return &RizinSite{}, err
 	}
 
-	d, err := InitDatabase(dbSubdir, rizinVersion)
+	d, err := InitDatabase(dbSubdir, rizinVersion, updateDB)
 	if err != nil {
 		return &RizinSite{}, err
 	}

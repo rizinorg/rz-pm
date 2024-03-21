@@ -16,7 +16,18 @@ Download the rz-pm binary for your system on the [latest release page](https://g
 | **GithubCI**  | [![Go](https://github.com/rizinorg/rz-pm/actions/workflows/go.yml/badge.svg)](https://github.com/rizinorg/rz-pm/actions/workflows/go.yml) |
 
 # Available packages
-The official database is available [here](https://github.com/rizinorg/rz-pm-db).
+
+The official database is available [here](https://github.com/rizinorg/rz-pm-db). You can change the repo by supplying a custom `RZPM_DB_REPO_URL` environment flag like this:
+
+```
+$ RZPM_DB_REPO_URL=https://github.com/bunnyfoofoo/my-custom-rz-pm-db rz-pm install rz-custom-plugin
+```
+
+Furthermore, to aid with debugging, you can disable auto-updating the `rz-pm-db` upon each command execution by adding `-update-db=false` flag, like this:
+
+```
+$ rz-pm -update-db=false install rz-custom-plugin
+```
 
 ## Package example
 

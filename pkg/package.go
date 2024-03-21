@@ -210,6 +210,7 @@ func (rp RizinPackage) downloadGit(artifactsPath string) error {
 
 // Download the source code of a package and extract it in the provided path
 func (rp RizinPackage) Download(baseArtifactsPath string) error {
+	log.Printf("Downloading package %s...\n", rp.PackageName)
 	artifactsPath := rp.artifactsPath(baseArtifactsPath)
 	err := os.MkdirAll(artifactsPath, os.FileMode(0755))
 	if err != nil {
