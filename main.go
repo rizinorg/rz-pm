@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -109,8 +110,14 @@ func infoPackage(c *cli.Context) error {
 	fmt.Printf("Name: %s\n", pkg.Name())
 	fmt.Printf("Version: %s\n", pkg.Version())
 	fmt.Printf("Summary: %s\n", pkg.Summary())
+	fmt.Printf("URL: %s\n", pkg.Source().URL)
+	fmt.Printf("Build system: %s\n", pkg.Source().BuildSystem)
+	fmt.Printf("Build arguments: %v\n", pkg.Source().BuildArguments)
 	fmt.Printf("Description: %s\n", pkg.Description())
 	fmt.Printf("Installed: %s\n", isInstalled)
+	if isInstalled == "yes" {
+		fmt.Printf("Install location: %s\n", filepath.Join(site.GetArtifactsDir(), pkg.Source().Directory))
+	}
 	return nil
 }
 

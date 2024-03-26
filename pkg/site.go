@@ -221,6 +221,7 @@ func (s *RizinSite) InstallPackage(pkg Package) error {
 		&minorVersion,
 	})
 	installedFilePath := filepath.Join(s.Path, installedFile)
+	log.Printf("Installed package %s at %s\n", pkg.Name(), installedFilePath)
 	return updateInstalledPackages(installedFilePath, s.installedPackages)
 }
 
