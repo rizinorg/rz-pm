@@ -162,10 +162,10 @@ func (fp FakePackage) Source() RizinPackageSource {
 func (fp FakePackage) Download(baseArtifactsPath string) error {
 	return nil
 }
-func (fp FakePackage) Build(site Site) error {
+func (fp FakePackage) Build(site Site, debugBuild bool) error {
 	return nil
 }
-func (fp FakePackage) Install(site Site) ([]string, error) {
+func (fp FakePackage) Install(site Site, debugBuild bool) ([]string, error) {
 	return nil, nil
 }
 func (fp FakePackage) Uninstall(site Site) error {
@@ -181,7 +181,7 @@ func TestListInstalledPackages(t *testing.T) {
 
 	pkg := FakePackage{myName: "jsdec"}
 
-	err = site.InstallPackage(pkg)
+	err = site.InstallPackage(pkg, false)
 	require.NoError(t, err)
 
 	packages, err := site.ListAvailablePackages()

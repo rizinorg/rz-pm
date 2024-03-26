@@ -22,6 +22,7 @@ const (
 	flagNameDebug   = "debug"
 	flagSkipUpgrade = "skip-upgrade"
 	flagUpdateDB    = "update-db"
+	flagDebugBuild  = "debugbuild"
 )
 
 func setDebug(value bool) {
@@ -234,7 +235,7 @@ func installPackages(c *cli.Context) error {
 			site.CleanPackage(pkg)
 		}
 
-		err = site.InstallPackage(pkg)
+		err = site.InstallPackage(pkg, c.Bool(flagDebugBuild))
 		if err != nil {
 			return err
 		}
@@ -375,6 +376,10 @@ RZ_PM_SITE:
 				&cli.BoolFlag{
 					Name:  "file",
 					Usage: "install a local file(s)",
+				},
+				&cli.BoolFlag{
+					Name:  flagDebugBuild,
+					Usage: "Build the package in debug mode",
 				},
 			},
 		},
