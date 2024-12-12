@@ -17,3 +17,4 @@ clean:
 update-deps:
 	go get -u ./...
 	go mod tidy
+	go mod vendor
