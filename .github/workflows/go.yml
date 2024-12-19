@@ -45,7 +45,7 @@ jobs:
         run: |
           git clone https://github.com/rizinorg/rizin
           cd rizin
-          git checkout v0.7.0
+          git checkout stable
           meson --buildtype=release --prefix=${{ matrix.prefix }} ${{ matrix.meson_options }} build
           meson compile ${{ matrix.os == 'windows-latest' && '-j1' || '' }} -C build
           ${{ matrix.sudo }} meson install -C build
