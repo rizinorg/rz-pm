@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -21,6 +22,7 @@ const (
 	flagNameDebug   = "debug"
 	flagSkipUpgrade = "skip-upgrade"
 	flagUpdateDB    = "update-db"
+	flagDebugBuild  = "debugbuild"
 )
 
 func setDebug(value bool) {
@@ -109,8 +111,14 @@ func infoPackage(c *cli.Context) error {
 	fmt.Printf("Name: %s\n", pkg.Name())
 	fmt.Printf("Version: %s\n", pkg.Version())
 	fmt.Printf("Summary: %s\n", pkg.Summary())
+	fmt.Printf("URL: %s\n", pkg.Source().URL)
+	fmt.Printf("Build system: %s\n", pkg.Source().BuildSystem)
+	fmt.Printf("Build arguments: %v\n", pkg.Source().BuildArguments)
 	fmt.Printf("Description: %s\n", pkg.Description())
 	fmt.Printf("Installed: %s\n", isInstalled)
+	if isInstalled == "yes" {
+		fmt.Printf("Install location: %s\n", filepath.Join(site.GetArtifactsDir(), pkg.Source().Directory))
+	}
 	return nil
 }
 
@@ -227,7 +235,7 @@ func installPackages(c *cli.Context) error {
 			site.CleanPackage(pkg)
 		}
 
-		err = site.InstallPackage(pkg)
+		err = site.InstallPackage(pkg, c.Bool(flagDebugBuild))
 		if err != nil {
 			return err
 		}
@@ -368,6 +376,10 @@ RZ_PM_SITE:
 				&cli.BoolFlag{
 					Name:  "file",
 					Usage: "install a local file(s)",
+				},
+				&cli.BoolFlag{
+					Name:  flagDebugBuild,
+					Usage: "Build the package in debug mode",
 				},
 			},
 		},

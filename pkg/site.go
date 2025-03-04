@@ -49,7 +49,7 @@ type Site interface {
 	GetArtifactsDir() string
 	GetPkgConfigDir() string
 	GetCMakeDir() string
-	InstallPackage(pkg Package) error
+	InstallPackage(pkg Package, debugBuild bool) error
 	UninstallPackage(pkg Package) error
 	CleanPackage(pkg Package) error
 	Remove() error
@@ -137,8 +137,10 @@ func (rp InstalledPackage) Source() RizinPackageSource { return RizinPackageSour
 func (rp InstalledPackage) Download(baseArtifactsPath string) error {
 	return fmt.Errorf("cannot be called")
 }
-func (rp InstalledPackage) Build(site Site) error { return fmt.Errorf("cannot be called") }
-func (rp InstalledPackage) Install(site Site) ([]string, error) {
+func (rp InstalledPackage) Build(site Site, debugBuild bool) error {
+	return fmt.Errorf("cannot be called")
+}
+func (rp InstalledPackage) Install(site Site, debugBuild bool) ([]string, error) {
 	return nil, fmt.Errorf("cannot be called")
 }
 func (rp InstalledPackage) Uninstall(site Site) error { return fmt.Errorf("cannot be called") }
@@ -204,12 +206,12 @@ func (s *RizinSite) GetCMakeDir() string {
 	return s.CMakePath
 }
 
-func (s *RizinSite) InstallPackage(pkg Package) error {
+func (s *RizinSite) InstallPackage(pkg Package, debugBuild bool) error {
 	if s.ContainsInstalledPackage(pkg.Name()) {
 		return fmt.Errorf("package %s already installed", pkg.Name())
 	}
 
-	files, err := pkg.Install(s)
+	files, err := pkg.Install(s, debugBuild)
 	if err != nil {
 		return err
 	}
@@ -221,6 +223,7 @@ func (s *RizinSite) InstallPackage(pkg Package) error {
 		&minorVersion,
 	})
 	installedFilePath := filepath.Join(s.Path, installedFile)
+	log.Printf("Installed package %s at %s\n", pkg.Name(), installedFilePath)
 	return updateInstalledPackages(installedFilePath, s.installedPackages)
 }
 

@@ -100,7 +100,7 @@ func (s FakeSite) GetPkgConfigDir() string {
 func (s FakeSite) GetCMakeDir() string {
 	return ""
 }
-func (s FakeSite) InstallPackage(pkg Package) error {
+func (s FakeSite) InstallPackage(pkg Package, debugBuild bool) error {
 	return nil
 }
 func (s FakeSite) UninstallPackage(pkg Package) error {
@@ -140,7 +140,7 @@ func TestInstallSimplePackage(t *testing.T) {
 	err = p.Download(tmpPath)
 	require.NoError(t, err, "package should be downloaded")
 
-	installed_files, err := p.Install(FakeSite{ArtifactsDir: tmpPath})
+	installed_files, err := p.Install(FakeSite{ArtifactsDir: tmpPath}, false)
 	assert.NoError(t, err, "The plugin should be built and installed without errors")
 	files, err := ioutil.ReadDir(pluginsPath)
 	require.NoError(t, err, "pluginsPath should be read")
@@ -181,7 +181,7 @@ func TestUninstallSimplePackage(t *testing.T) {
 	require.NoError(t, err, "package should be downloaded")
 
 	s := FakeSite{ArtifactsDir: tmpPath}
-	_, err = p.Install(s)
+	_, err = p.Install(s, false)
 	assert.NoError(t, err, "The plugin should be built and installed without errors")
 
 	err = p.Uninstall(s)

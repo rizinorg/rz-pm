@@ -50,8 +50,8 @@ type Package interface {
 	Description() string
 	Source() RizinPackageSource
 	Download(baseArtifactsPath string) error
-	Build(site Site) error
-	Install(site Site) ([]string, error)
+	Build(site Site, debugBuild bool) error
+	Install(site Site, debugBuild bool) ([]string, error)
 	Uninstall(site Site) error
 }
 
@@ -233,7 +233,7 @@ func (rp RizinPackage) sourcePath(baseArtifactsPath string) string {
 	return filepath.Join(rp.artifactsPath(baseArtifactsPath), rp.PackageSource.Directory)
 }
 
-func (rp RizinPackage) buildMeson(site Site) error {
+func (rp RizinPackage) buildMeson(site Site, debugBuild bool) error {
 	srcPath := rp.sourcePath(site.GetArtifactsDir())
 	args := []string{"setup"}
 	args = append(args, rp.PackageSource.BuildArguments...)
@@ -243,6 +243,13 @@ func (rp RizinPackage) buildMeson(site Site) error {
 	}
 	if site.GetCMakeDir() != "" {
 		args = append(args, fmt.Sprintf("--cmake-prefix-path=%s", site.GetCMakeDir()))
+	}
+	if debugBuild {
+		log.Println("Building in debug mode")
+		args = append(args, "--buildtype=debug")
+	} else {
+		log.Println("Building in optimized debug mode")
+		args = append(args, "--buildtype=debugoptimized")
 	}
 	args = append(args, "build")
 	cmd := exec.Command("meson", args...)
@@ -263,13 +270,20 @@ func (rp RizinPackage) buildMeson(site Site) error {
 	return nil
 }
 
-func (rp RizinPackage) buildCMake(site Site) error {
+func (rp RizinPackage) buildCMake(site Site, debugBuild bool) error {
 	srcPath := rp.sourcePath(site.GetArtifactsDir())
 	args := []string{}
 	args = append(args, rp.PackageSource.BuildArguments...)
 	args = append(args, fmt.Sprintf("-DCMAKE_INSTALL_PREFIX=%s/.local", xdg.Home))
 	if site.GetCMakeDir() != "" {
 		args = append(args, fmt.Sprintf("-DCMAKE_PREFIX_PATH=%s", site.GetCMakeDir()))
+	}
+	if debugBuild {
+		log.Println("Building in debug mode")
+		args = append(args, "-DCMAKE_BUILD_TYPE=Debug")
+	} else {
+		log.Println("Building in optimized debug mode")
+		args = append(args, "-DCMAKE_BUILD_TYPE=RelWithDebInfo")
 	}
 	args = append(args, "-B")
 	args = append(args, "build")
@@ -368,7 +382,7 @@ func buildErrorMsg(msg string) string {
 }
 
 // Build a package if a source is provided
-func (rp RizinPackage) Build(site Site) error {
+func (rp RizinPackage) Build(site Site, debugBuild bool) error {
 	if site.GetPkgConfigDir() == "" && site.GetCMakeDir() == "" {
 		return fmt.Errorf("make sure rizin development files are installed (e.g. librizin-dev, rizin-devel, etc.)")
 	}
@@ -397,7 +411,7 @@ func (rp RizinPackage) Build(site Site) error {
 			}
 		}
 
-		return rp.buildMeson(site)
+		return rp.buildMeson(site, debugBuild)
 	} else if rp.PackageSource.BuildSystem == "cmake" {
 		_, err := exec.LookPath("cmake")
 		if err != nil {
@@ -409,7 +423,7 @@ func (rp RizinPackage) Build(site Site) error {
 			return fmt.Errorf(buildErrorMsg("make sure `pkg-config` is installed and in PATH"))
 		}
 
-		return rp.buildCMake(site)
+		return rp.buildCMake(site, debugBuild)
 	} else {
 		log.Printf("BuildSystem %s is not supported yet.", rp.PackageSource.BuildSystem)
 		return fmt.Errorf("unsupported build system")
@@ -417,8 +431,8 @@ func (rp RizinPackage) Build(site Site) error {
 }
 
 // Install a package after building it
-func (rp RizinPackage) Install(site Site) ([]string, error) {
-	err := rp.Build(site)
+func (rp RizinPackage) Install(site Site, debugBuild bool) ([]string, error) {
+	err := rp.Build(site, debugBuild)
 	if err != nil {
 		return []string{}, err
 	}
