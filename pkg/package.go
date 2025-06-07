@@ -210,7 +210,7 @@ func (rp RizinPackage) downloadGit(artifactsPath string) error {
 
 // Download the source code of a package and extract it in the provided path
 func (rp RizinPackage) Download(baseArtifactsPath string) error {
-	log.Printf("Downloading package %s...\n", rp.PackageName)
+	log.Printf("Downloading package %s... from '%s'", rp.PackageName, rp.PackageSource.URL)
 	artifactsPath := rp.artifactsPath(baseArtifactsPath)
 	err := os.MkdirAll(artifactsPath, os.FileMode(0755))
 	if err != nil {
@@ -249,6 +249,12 @@ func (rp RizinPackage) buildMeson(site Site) error {
 	cmd.Dir = srcPath
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.Writer()
+
+	log.Printf("Running meson setup:")
+	log.Printf("\tdir: %s", srcPath)
+	log.Printf("\targs: %s", strings.Join(args, " "))
+
+
 	if err := cmd.Run(); err != nil {
 		return err
 	}

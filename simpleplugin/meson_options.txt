@@ -1,0 +1,5 @@
+option(
+  'rizin_plugdir',
+  type: 'string',
+  description: 'Rizin plugin directory',
+)
