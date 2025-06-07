@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -20,7 +19,7 @@ func containsPackage(packages []Package, name string) bool {
 }
 
 func TestEmptySite(t *testing.T) {
-	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest")
 	require.NoError(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
 	site, err := InitSite(tmpPath, true)
@@ -35,7 +34,7 @@ func TestEmptySite(t *testing.T) {
 }
 
 func TestExistingSite(t *testing.T) {
-	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest")
 	require.Nil(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
 	_, err = InitSite(tmpPath, true)
@@ -49,7 +48,7 @@ func TestExistingSite(t *testing.T) {
 }
 
 func TestListPackages(t *testing.T) {
-	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest")
 	require.Nil(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
 	site, err := InitSite(tmpPath, true)
@@ -173,7 +172,7 @@ func (fp FakePackage) Uninstall(site Site) error {
 }
 
 func TestListInstalledPackages(t *testing.T) {
-	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest")
 	require.Nil(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
 	site, err := InitSite(tmpPath, true)

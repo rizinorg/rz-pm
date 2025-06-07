@@ -25,7 +25,7 @@ func TestDownloadSimplePackage(t *testing.T) {
 		},
 	}
 
-	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest")
 	require.NoError(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
 
@@ -51,11 +51,11 @@ func TestWrongHash(t *testing.T) {
 		},
 	}
 
-	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest")
 	require.Nil(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
 
-	installPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest-install")
+	installPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest-install")
 	require.Nil(t, err, "install path should be created")
 	defer os.RemoveAll(installPath)
 
@@ -128,11 +128,11 @@ func TestInstallSimplePackage(t *testing.T) {
 		},
 	}
 
-	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest")
 	require.NoError(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
 
-	pluginsPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest-install")
+	pluginsPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest-install")
 	require.NoError(t, err, "install path should be created")
 	defer os.RemoveAll(pluginsPath)
 	p.PackageSource.BuildArguments[0] += pluginsPath
@@ -168,11 +168,11 @@ func TestUninstallSimplePackage(t *testing.T) {
 		},
 	}
 
-	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest")
 	require.NoError(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
 
-	pluginsPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest-install")
+	pluginsPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest-install")
 	require.NoError(t, err, "install path should be created")
 	defer os.RemoveAll(pluginsPath)
 	p.PackageSource.BuildArguments[0] += pluginsPath
@@ -205,7 +205,7 @@ func TestDownloadGitPackage(t *testing.T) {
 		},
 	}
 
-	tmpPath, err := ioutil.TempDir(os.TempDir(), "rzpmtest")
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest")
 	require.NoError(t, err, "temp path should be created")
 	// defer os.RemoveAll(tmpPath)
 
