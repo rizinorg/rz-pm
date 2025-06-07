@@ -76,51 +76,24 @@ type FakeSite struct {
 	ArtifactsDir string
 }
 
-func (s FakeSite) ListAvailablePackages() ([]Package, error) {
-	return []Package{}, nil
-}
-func (s FakeSite) ListInstalledPackages() ([]Package, error) {
-	return []Package{}, nil
-}
-func (s FakeSite) IsPackageInstalled(pkg Package) bool {
-	return false
-}
-func (s FakeSite) GetPackage(name string) (Package, error) {
-	return RizinPackage{}, nil
-}
-func (s FakeSite) GetInstalledPackage(name string) (InstalledPackage, error) {
+func (s FakeSite) GetInstalledPackage(string) (InstalledPackage, error) {
 	return InstalledPackage{}, nil
 }
-func (s FakeSite) GetPackageFromFile(filename string) (Package, error) {
-	return RizinPackage{}, nil
-}
-func (s FakeSite) GetBaseDir() string {
-	return ""
-}
-func (s FakeSite) RizinVersion() string {
-	return "0.5.2"
-}
-func (s FakeSite) GetArtifactsDir() string {
-	return s.ArtifactsDir
-}
-func (s FakeSite) GetPkgConfigDir() string {
-	return "pkg-config-dir"
-}
-func (s FakeSite) GetCMakeDir() string {
-	return ""
-}
-func (s FakeSite) InstallPackage(pkg Package) error {
-	return nil
-}
-func (s FakeSite) UninstallPackage(pkg Package) error {
-	return nil
-}
-func (s FakeSite) CleanPackage(pkg Package) error {
-	return nil
-}
-func (s FakeSite) Remove() error {
-	return nil
-}
+func (s FakeSite) ListAvailablePackages() ([]Package, error)           { return []Package{}, nil }
+func (s FakeSite) ListInstalledPackages() ([]Package, error)           { return []Package{}, nil }
+func (s FakeSite) IsPackageInstalled(Package) bool                     { return false }
+func (s FakeSite) GetPackage(string) (Package, error)                  { return RizinPackage{}, nil }
+func (s FakeSite) GetPackageFromFile(filename string) (Package, error) { return RizinPackage{}, nil }
+func (s FakeSite) GetBaseDir() string                                  { return "" }
+func (s FakeSite) RizinVersion() string                                { return "0.5.2" }
+func (s FakeSite) GetArtifactsDir() string                             { return s.ArtifactsDir }
+func (s FakeSite) GetPkgConfigDir() string                             { return "pkg-config-dir" }
+func (s FakeSite) GetCMakeDir() string                                 { return "" }
+func (s FakeSite) InstallPackage(Package) error                        { return nil }
+func (s FakeSite) UninstallPackage(Package) error                      { return nil }
+func (s FakeSite) CleanPackage(Package) error                          { return nil }
+func (s FakeSite) Remove() error                                       { return nil }
+func (s FakeSite) Close() error                                        { return nil }
 
 // tarGzDir creates a .tar.gz archive at destFile containing the contents of srcDir.
 func tarGzDir(destFile, srcDir string) error {

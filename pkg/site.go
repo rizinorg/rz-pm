@@ -3,13 +3,14 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/adrg/xdg"
 )
@@ -17,6 +18,8 @@ import (
 const (
 	SiteDirEnvVar = "RZPM_SITEDIR"
 )
+
+var ErrSiteLocked = fmt.Errorf("site directory is already locked")
 
 func SiteDir() string {
 	if envVar := os.Getenv(SiteDirEnvVar); envVar != "" {
@@ -39,6 +42,7 @@ func init() {
 }
 
 type Site interface {
+	io.Closer
 	ListAvailablePackages() ([]Package, error)
 	ListInstalledPackages() ([]Package, error)
 	IsPackageInstalled(pkg Package) bool
@@ -62,6 +66,13 @@ type InstalledPackage struct {
 	RizinVersion   *string   `json:"rizin_version"`
 }
 
+type SiteLock struct {
+	sync.Locker
+	path   string
+	locked bool
+	mu     sync.Mutex
+}
+
 type RizinSite struct {
 	Path              string
 	Database          Database
@@ -69,6 +80,7 @@ type RizinSite struct {
 	CMakePath         string
 	installedPackages []InstalledPackage
 	rizinVersion      string
+	lock              *SiteLock
 }
 
 const dbDir string = "rz-pm-db"
@@ -92,28 +104,46 @@ func InitSite(path string, updateDB bool) (Site, error) {
 		}
 	}
 
+	// lock the site directory
+	siteLock := newSiteLock(path)
+	err := siteLock.Lock()
+	if err != nil {
+		if err == ErrSiteLocked {
+			fmt.Println("Site directory is already locked, another instance of rz-pm might be running or the site directory is locked.")
+			fmt.Println("If you are sure that no other instance is running, you can remove the lock file manually.")
+			fmt.Println("Lock file is located at:", filepath.Join(path, "site.lock"))
+			return &RizinSite{}, fmt.Errorf("can't operate on site directory %s: %w", path, err)
+		}
+	}
+
+	cleanup := func(err error) (*RizinSite, error) {
+		_ = siteLock.Unlock() // try to unlock the site lock, ignore any error
+		return &RizinSite{}, fmt.Errorf("failed to initialize site: %w", err)
+	}
+
 	rizinVersion, err := getRizinVersion()
 	if err != nil {
-		return &RizinSite{}, err
+		return cleanup(fmt.Errorf("failed to get rizin version: %w", err))
 	}
+
 	installedPackages, err := getInstalledPackages(installedFilePath, rizinVersion)
 	if err != nil {
-		return &RizinSite{}, err
+		return cleanup(fmt.Errorf("failed to get installed packages: %w", err))
 	}
 
 	d, err := InitDatabase(dbSubdir, rizinVersion, updateDB)
 	if err != nil {
-		return &RizinSite{}, err
+		return cleanup(fmt.Errorf("failed to initialize database: %w", err))
 	}
 
 	pkgConfigPath, err := getPkgConfigPath()
 	if err != nil {
-		return &RizinSite{}, err
+		return cleanup(fmt.Errorf("failed to get pkg-config path: %w", err))
 	}
 
 	cmakePath, err := getCMakePath()
 	if err != nil {
-		return &RizinSite{}, err
+		return cleanup(fmt.Errorf("failed to get CMake path: %w", err))
 	}
 
 	s := RizinSite{
@@ -123,7 +153,9 @@ func InitSite(path string, updateDB bool) (Site, error) {
 		CMakePath:         cmakePath,
 		installedPackages: installedPackages,
 		rizinVersion:      rizinVersion,
+		lock:              siteLock,
 	}
+
 	return &s, nil
 }
 
@@ -177,7 +209,9 @@ func (s *RizinSite) RizinVersion() string {
 }
 
 func (s *RizinSite) IsPackageInstalled(pkg Package) bool {
-	return s.ContainsInstalledPackage(pkg.Name())
+	name := pkg.Name()
+	_, err := s.GetInstalledPackage(name)
+	return err == nil
 }
 
 func (s *RizinSite) GetPackage(name string) (Package, error) {
@@ -205,7 +239,7 @@ func (s *RizinSite) GetCMakeDir() string {
 }
 
 func (s *RizinSite) InstallPackage(pkg Package) error {
-	if s.ContainsInstalledPackage(pkg.Name()) {
+	if s.IsPackageInstalled(pkg) {
 		return fmt.Errorf("package %s already installed", pkg.Name())
 	}
 
@@ -225,7 +259,7 @@ func (s *RizinSite) InstallPackage(pkg Package) error {
 }
 
 func (s *RizinSite) UninstallPackage(pkg Package) error {
-	if !s.ContainsInstalledPackage(pkg.Name()) {
+	if !s.IsPackageInstalled(pkg) {
 		return fmt.Errorf("package %s not installed", pkg.Name())
 	}
 
@@ -272,6 +306,19 @@ func (s *RizinSite) CleanPackage(pkg Package) error {
 
 func (s *RizinSite) Remove() error {
 	return os.RemoveAll(s.Path)
+}
+
+func (s *RizinSite) Close() error {
+	if s.lock == nil {
+		panic("site lock is nil, cannot close")
+	}
+
+	err := s.lock.Unlock()
+	if err != nil {
+		return fmt.Errorf("failed to unlock site: %w", err)
+	}
+
+	return nil
 }
 
 func getRizinVersion() (string, error) {
@@ -336,7 +383,7 @@ func getInstalledPackages(path string, rizinVersion string) ([]InstalledPackage,
 		return []InstalledPackage{}, nil
 	}
 
-	by, err := ioutil.ReadFile(path)
+	by, err := os.ReadFile(path)
 	if err != nil {
 		return []InstalledPackage{}, err
 	}
@@ -373,7 +420,7 @@ func updateInstalledPackages(path string, packages []InstalledPackage) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(path, by, fs.FileMode(0622))
+	err = os.WriteFile(path, by, fs.FileMode(0622))
 	if err != nil {
 		return err
 	}
@@ -405,7 +452,53 @@ func (s *RizinSite) GetInstalledPackage(name string) (InstalledPackage, error) {
 	return InstalledPackage{}, fmt.Errorf("installed package %s not found", name)
 }
 
-func (s *RizinSite) ContainsInstalledPackage(name string) bool {
-	_, err := s.GetInstalledPackage(name)
-	return err == nil
+func newSiteLock(path string) *SiteLock {
+	return &SiteLock{
+		mu:     sync.Mutex{},
+		locked: false,
+		path:   filepath.Join(path, "site.lock"),
+	}
+}
+
+func (sl *SiteLock) Lock() error {
+	// take complete ownership of the struct
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+
+	lockFile, err := os.OpenFile(sl.path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+	if err != nil {
+		if os.IsExist(err) {
+			return ErrSiteLocked
+		}
+		return fmt.Errorf("could not create lock file %s: %w", sl.path, err)
+	}
+
+	err = lockFile.Close()
+	if err != nil {
+		return fmt.Errorf("could not close lock file %s: %w", sl.path, err)
+	}
+
+	sl.locked = true
+	return nil
+}
+
+func (sl *SiteLock) Unlock() error {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+
+	if !sl.locked {
+		return fmt.Errorf("site lock is not active")
+	}
+
+	err := os.Remove(sl.path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			sl.locked = false
+			return nil // lock file already removed
+		}
+		return fmt.Errorf("could not remove lock file %s: %w", sl.path, err)
+	}
+
+	sl.locked = false
+	return nil
 }

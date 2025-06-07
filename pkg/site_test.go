@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -37,14 +38,33 @@ func TestExistingSite(t *testing.T) {
 	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest")
 	require.Nil(t, err, "temp path should be created")
 	defer os.RemoveAll(tmpPath)
-	_, err = InitSite(tmpPath, true)
+	site, err := InitSite(tmpPath, true)
 	require.Nil(t, err, "site should be initialized when dir is empty")
-	_, err = InitSite(tmpPath, true)
+	site.Close()
+	site, err = InitSite(tmpPath, true)
 	assert.Nil(t, err, "site should be initialized even when dir is already initialized")
+	site.Close()
 	_, err = os.Stat(filepath.Join(tmpPath, "rz-pm-db", "README.md"))
 	assert.Nil(t, err, "rz-pm-db repository should be downloaded")
 	_, err = os.Stat(filepath.Join(tmpPath, "rz-pm-db", "db"))
 	assert.Nil(t, err, "rz-pm-db repository should be downloaded 2")
+}
+
+func TestLockedSite(t *testing.T) {
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest")
+	require.Nil(t, err, "temp path should be created")
+	defer os.RemoveAll(tmpPath)
+	// create a new site
+	site, err := InitSite(tmpPath, true)
+	require.Nil(t, err, "site should be initialized")
+	// create a new site with the same path
+	site2, err := InitSite(tmpPath, true)
+	assert.True(t, errors.Is(err, ErrSiteLocked), "site should be locked when another instance is running")
+	site.Close()
+	// try to create a new site with the same path again
+	site2, err = InitSite(tmpPath, true)
+	assert.Nil(t, err, "site should be initialized after the first instance is closed")
+	site2.Close()
 }
 
 func TestListPackages(t *testing.T) {
