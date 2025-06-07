@@ -3,6 +3,7 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"io/ioutil"
 	"log"
@@ -39,6 +40,7 @@ func init() {
 }
 
 type Site interface {
+	io.Closer
 	ListAvailablePackages() ([]Package, error)
 	ListInstalledPackages() ([]Package, error)
 	IsPackageInstalled(pkg Package) bool
@@ -69,11 +71,33 @@ type RizinSite struct {
 	CMakePath         string
 	installedPackages []InstalledPackage
 	rizinVersion      string
+	unlockSiteDir     func() // function to unlock the site directory
 }
 
 const dbDir string = "rz-pm-db"
 const artifactsDir string = "artifacts"
 const installedFile string = "installed"
+
+var AlreadyLockedError = fmt.Errorf("site directory is already locked")
+
+func lockSiteDir(path string) (func(), error) {
+	lockFilePath := filepath.Join(path, "site.lock")
+
+	lockFile, err := os.OpenFile(lockFilePath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+	if err != nil {
+		if os.IsExist(err) {
+			return nil, AlreadyLockedError
+		}
+		return nil, fmt.Errorf("could not create lock file %s: %w", lockFilePath, err)
+	}
+
+	unlockFunc := func() {
+		lockFile.Close()
+		os.Remove(lockFilePath)
+	}
+
+	return unlockFunc, nil
+}
 
 func InitSite(path string, updateDB bool) (Site, error) {
 	// create the filesystem structure
@@ -89,6 +113,17 @@ func InitSite(path string, updateDB bool) (Site, error) {
 	for _, p := range paths {
 		if err := os.MkdirAll(p, 0755); err != nil {
 			return &RizinSite{}, fmt.Errorf("could not create %s: %w", p, err)
+		}
+	}
+
+	// lock the site directory
+	unlockFun, err := lockSiteDir(path)
+	if err != nil {
+		if err == AlreadyLockedError {
+			fmt.Println("Site directory is already locked, another instance of rz-pm might be running or the site directory is locked.")
+			fmt.Println("If you are sure that no other instance is running, you can remove the lock file manually.")
+			fmt.Println("Lock file is located at:", filepath.Join(path, "site.lock"))
+			return &RizinSite{}, fmt.Errorf("can't operate on site directory %s: %w", path, err)
 		}
 	}
 
@@ -123,6 +158,7 @@ func InitSite(path string, updateDB bool) (Site, error) {
 		CMakePath:         cmakePath,
 		installedPackages: installedPackages,
 		rizinVersion:      rizinVersion,
+		unlockSiteDir:     unlockFun,
 	}
 	return &s, nil
 }
@@ -408,4 +444,11 @@ func (s *RizinSite) GetInstalledPackage(name string) (InstalledPackage, error) {
 func (s *RizinSite) ContainsInstalledPackage(name string) bool {
 	_, err := s.GetInstalledPackage(name)
 	return err == nil
+}
+
+func (s *RizinSite) Close() error {
+	if s.unlockSiteDir != nil {
+		s.unlockSiteDir()
+	}
+	return nil
 }
