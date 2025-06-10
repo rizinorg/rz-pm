@@ -41,6 +41,8 @@ func listPackages(c *cli.Context, installed bool) error {
 	if err != nil {
 		return err
 	}
+	defer site.Close()
+
 	var packages []pkg.Package
 	if installed {
 		packages, err = site.ListInstalledPackages()
@@ -88,6 +90,7 @@ func infoPackage(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	defer site.Close()
 
 	var pkg pkg.Package
 	if c.Bool("file") {
@@ -212,6 +215,7 @@ func installPackages(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
+		defer site.Close()
 
 		var pkg pkg.Package
 		if c.Bool("file") {
@@ -250,6 +254,7 @@ func uninstallPackages(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
+		defer site.Close()
 
 		var pkg pkg.Package
 		if c.Bool("file") {
@@ -280,6 +285,7 @@ func cleanPackage(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	defer site.Close()
 
 	var pkg pkg.Package
 	if c.Bool("file") {
