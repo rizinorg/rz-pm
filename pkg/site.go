@@ -7,12 +7,11 @@ import (
 	"io/fs"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/adrg/xdg"
+	"github.com/rizinorg/rz-pm/pkg/rizin"
 )
 
 const (
@@ -79,8 +78,9 @@ type RizinSite struct {
 	PkgConfigPath     string
 	CMakePath         string
 	installedPackages []InstalledPackage
-	rizinVersion      string
-	lock              *SiteLock
+
+	rzInfo rizin.RizinInfo
+	lock   *SiteLock
 }
 
 const dbDir string = "rz-pm-db"
@@ -92,6 +92,7 @@ func InitSite(path string, updateDB bool) (Site, error) {
 	dbSubdir := filepath.Join(path, dbDir)
 	artifactsSubdir := filepath.Join(path, artifactsDir)
 	installedFilePath := filepath.Join(path, installedFile)
+
 	paths := []string{
 		path,
 		dbSubdir,
@@ -117,31 +118,38 @@ func InitSite(path string, updateDB bool) (Site, error) {
 	}
 
 	cleanup := func(err error) (*RizinSite, error) {
-		_ = siteLock.Unlock() // try to unlock the site lock, ignore any error
-		return &RizinSite{}, fmt.Errorf("failed to initialize site: %w", err)
+		_ = siteLock.Unlock()
+		return &RizinSite{}, err
 	}
 
-	rizinVersion, err := getRizinVersion()
+	rizinInfo, err := rizin.GetRizinInfo()
 	if err != nil {
-		return cleanup(fmt.Errorf("failed to get rizin version: %w", err))
+		return cleanup(fmt.Errorf("failed to get rizin info: %w", err))
 	}
 
-	installedPackages, err := getInstalledPackages(installedFilePath, rizinVersion)
+	installedPackages, err := getInstalledPackages(installedFilePath, rizinInfo.Version)
 	if err != nil {
 		return cleanup(fmt.Errorf("failed to get installed packages: %w", err))
 	}
 
-	d, err := InitDatabase(dbSubdir, rizinVersion, updateDB)
+	d, err := InitDatabase(dbSubdir, rizinInfo.Version)
 	if err != nil {
 		return cleanup(fmt.Errorf("failed to initialize database: %w", err))
 	}
 
-	pkgConfigPath, err := getPkgConfigPath()
+	if updateDB {
+		err = d.UpdateDatabase(rizinInfo.Version)
+		if err != nil {
+			return cleanup(fmt.Errorf("failed to update database: %w", err))
+		}
+	}
+
+	pkgConfigPath, err := getPkgConfigPath(&rizinInfo)
 	if err != nil {
 		return cleanup(fmt.Errorf("failed to get pkg-config path: %w", err))
 	}
 
-	cmakePath, err := getCMakePath()
+	cmakePath, err := getCMakePath(&rizinInfo)
 	if err != nil {
 		return cleanup(fmt.Errorf("failed to get CMake path: %w", err))
 	}
@@ -152,7 +160,7 @@ func InitSite(path string, updateDB bool) (Site, error) {
 		PkgConfigPath:     pkgConfigPath,
 		CMakePath:         cmakePath,
 		installedPackages: installedPackages,
-		rizinVersion:      rizinVersion,
+		rzInfo:            rizinInfo,
 		lock:              siteLock,
 	}
 
@@ -205,7 +213,7 @@ func (s *RizinSite) ListInstalledPackages() ([]Package, error) {
 }
 
 func (s *RizinSite) RizinVersion() string {
-	return s.rizinVersion
+	return s.rzInfo.Version
 }
 
 func (s *RizinSite) IsPackageInstalled(pkg Package) bool {
@@ -248,7 +256,7 @@ func (s *RizinSite) InstallPackage(pkg Package) error {
 		return err
 	}
 
-	minorVersion := GetMajorMinorVersion(s.rizinVersion)
+	minorVersion := GetMajorMinorVersion(s.RizinVersion())
 	s.installedPackages = append(s.installedPackages, InstalledPackage{
 		pkg.Name(),
 		&files,
@@ -321,39 +329,11 @@ func (s *RizinSite) Close() error {
 	return nil
 }
 
-func getRizinVersion() (string, error) {
-	if _, err := exec.LookPath("rizin"); err != nil {
-		return "", fmt.Errorf("rizin does not seem to be installed on your system. Make sure it is installed and in PATH")
-	}
-	cmd := exec.Command("rizin", "-H", "RZ_VERSION")
-	out, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
+func getPkgConfigPath(info *rizin.RizinInfo) (string, error) {
+	libPath := info.LibDir
 
-	return strings.TrimRight(string(out), "\r\n"), nil
-}
-
-func getRizinLibPath() (string, error) {
-	if _, err := exec.LookPath("rizin"); err != nil {
-		return "", fmt.Errorf("rizin does not seem to be installed on your system. Make sure it is installed and in PATH")
-	}
-	cmd := exec.Command("rizin", "-H", "RZ_LIBDIR")
-	out, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-
-	return strings.TrimRight(string(out), "\r\n"), nil
-}
-
-func getPkgConfigPath() (string, error) {
-	libPath, err := getRizinLibPath()
-	if err != nil {
-		return "", err
-	}
 	pkgConfigPath := filepath.Join(libPath, "pkgconfig")
-	_, err = os.Stat(pkgConfigPath)
+	_, err := os.Stat(pkgConfigPath)
 	if os.IsNotExist(err) {
 		return "", nil
 	} else if err != nil {
@@ -362,13 +342,11 @@ func getPkgConfigPath() (string, error) {
 	return pkgConfigPath, nil
 }
 
-func getCMakePath() (string, error) {
-	libPath, err := getRizinLibPath()
-	if err != nil {
-		return "", err
-	}
+func getCMakePath(info *rizin.RizinInfo) (string, error) {
+	libPath := info.LibDir
+
 	cmakePath := filepath.Join(libPath, "cmake")
-	_, err = os.Stat(cmakePath)
+	_, err := os.Stat(cmakePath)
 	if os.IsNotExist(err) {
 		return "", nil
 	} else if err != nil {

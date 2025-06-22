@@ -3,7 +3,6 @@ package pkg
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -24,13 +23,25 @@ var ErrRizinPackageWrongHash = errors.New("wrong hash")
 
 const dbPath string = "db"
 
-func InitDatabase(path string, rizinVersion string, updateDB bool) (Database, error) {
+func InitDatabase(path string, rizinVersion string) (Database, error) {
+	firstTime := false
+
+	// if path does not exist, create it and force a db update
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		err = os.MkdirAll(path, 0o755)
+		if err != nil {
+			return Database{}, fmt.Errorf("failed to create database directory: %w", err)
+		}
+		firstTime = true
+	}
+
 	d := Database{path}
 
-	if updateDB {
-		err := d.updateDatabase(rizinVersion)
+	if firstTime {
+		log.Printf("Initializing rz-pm-db repository at %s...\n", d.Path)
+		err := d.UpdateDatabase(rizinVersion)
 		if err != nil {
-			return Database{}, fmt.Errorf("could not download the rz-pm database")
+			return Database{}, fmt.Errorf("failed to initialize rz-pm-db repository: %w", err)
 		}
 	}
 
@@ -104,7 +115,7 @@ func (d Database) switchTag(repo *git.Repository, w *git.Worktree, rizinVersion 
 	return switchBranch, nil
 }
 
-func (d Database) updateDatabase(rizinVersion string) error {
+func (d Database) UpdateDatabase(rizinVersion string) error {
 	repo, err := git.PlainOpen(d.Path)
 	if err == git.ErrRepositoryNotExists {
 		log.Printf("Downloading rz-pm-db repository...\n")
@@ -181,7 +192,7 @@ func ParsePackageFile(path string) (Package, error) {
 
 func (d Database) ListAvailablePackages() ([]Package, error) {
 	dbPath := filepath.Join(d.Path, dbPath)
-	files, err := ioutil.ReadDir(dbPath)
+	files, err := os.ReadDir(dbPath)
 	if err != nil {
 		return nil, err
 	}

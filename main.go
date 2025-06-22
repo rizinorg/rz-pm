@@ -6,13 +6,17 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
+	"github.com/adrg/xdg"
 	"github.com/fatih/color"
 	"github.com/hashicorp/go-version"
 	"github.com/inconshreveable/go-update"
 	"github.com/rizinorg/rz-pm/pkg"
+	"github.com/rizinorg/rz-pm/pkg/updatecheck"
 	"github.com/urfave/cli/v2"
 )
 
@@ -21,6 +25,20 @@ const (
 	flagNameDebug   = "debug"
 	flagSkipUpgrade = "skip-upgrade"
 	flagUpdateDB    = "update-db"
+
+	updateDBCheckFile = "last_db_update_check"
+	updateCheckFile   = "last_update_check"
+)
+
+var (
+	updateChecker = updatecheck.Checker{
+		Path:     filepath.Join(xdg.CacheHome, "rz-pm", updateCheckFile),
+		Interval: 24 * time.Hour,
+	}
+	dbUpdateChecker = updatecheck.Checker{
+		Path:     filepath.Join(xdg.CacheHome, "rz-pm", updateDBCheckFile),
+		Interval: 24 * time.Hour,
+	}
 )
 
 func setDebug(value bool) {
@@ -55,10 +73,12 @@ func listPackages(c *cli.Context, installed bool) error {
 
 	green := color.New(color.Bold, color.FgGreen).SprintFunc()
 	red := color.New(color.Bold, color.FgRed).SprintFunc()
+
 	for _, myPkg := range packages {
 		info := ""
 		if site.IsPackageInstalled(myPkg) {
 			info = green(" [installed]")
+
 			installedPackage, err := site.GetInstalledPackage(myPkg.Name())
 			if err == nil && installedPackage.RizinVersion != nil {
 				if pkg.GetMajorMinorVersion(site.RizinVersion()) != *installedPackage.RizinVersion {
@@ -66,6 +86,7 @@ func listPackages(c *cli.Context, installed bool) error {
 				}
 			}
 		}
+
 		fmt.Printf("%s: %s%s\n", myPkg.Name(), myPkg.Summary(), info)
 	}
 	return nil
@@ -305,7 +326,56 @@ func cleanPackage(c *cli.Context) error {
 	return nil
 }
 
+func checkNewerVersionOnline(c *cli.Context) error {
+	setDebug(c.Bool(flagNameDebug))
+
+	if !c.Bool(flagSkipUpgrade) && c.Args().First() != "upgrade" {
+		shouldCheck, err := updateChecker.ShouldCheck()
+		if err != nil {
+			// If we can't determine, default to checking
+			shouldCheck = true
+		}
+
+		if shouldCheck {
+			log.Println("Checking for newer rz-pm version online...")
+			needsUpgrade, current_version, new_version, err := checkUpgrade(c)
+			if err != nil {
+				return nil
+			} else if !needsUpgrade {
+				_ = updateChecker.UpdateTimestamp()
+				return nil
+			}
+
+			fmt.Println("Your version of rz-pm is not the latest one.")
+			fmt.Printf("Currently installed version: %s, available version: %s\n", current_version, new_version)
+			fmt.Println()
+			fmt.Println("Run the 'upgrade' command to upgrade rz-pm.")
+			_ = updateChecker.UpdateTimestamp()
+			os.Exit(0)
+		} else {
+			log.Println("Skipping update check, last check was recent enough.")
+		}
+	}
+
+	shouldUpdateDB, err := dbUpdateChecker.ShouldCheck()
+	if err != nil {
+		// If we can't determine, default to checking
+		shouldUpdateDB = true
+	}
+
+	if shouldUpdateDB {
+		log.Println("We didn't check the DB for updates for a while, checking now...")
+		c.Set(flagUpdateDB, "true")
+		dbUpdateChecker.UpdateTimestamp()
+	} else {
+		log.Println("Skipping DB update check, last check was recent enough.")
+	}
+
+	return nil
+}
+
 func main() {
+
 	cli.VersionFlag = &cli.BoolFlag{
 		Name:    "print-version",
 		Aliases: []string{"V"},
@@ -335,30 +405,11 @@ RZ_PM_SITE:
 		&cli.BoolFlag{
 			Name:  flagUpdateDB,
 			Usage: "Update the DB?",
-			Value: true,
+			Value: false,
 		},
 	}
 
-	app.Before = func(c *cli.Context) error {
-		setDebug(c.Bool(flagNameDebug))
-
-		if !c.Bool(flagSkipUpgrade) && c.Args().First() != "upgrade" {
-			needsUpgrade, current_version, new_version, err := checkUpgrade(c)
-			if err != nil {
-				return nil
-			} else if !needsUpgrade {
-				return nil
-			}
-
-			fmt.Println("Your version of rz-pm is not the latest one.")
-			fmt.Printf("Currently installed version: %s, available version: %s\n", current_version, new_version)
-			fmt.Println()
-			fmt.Println("Run the 'upgrade' command to upgrade rz-pm or use the '--skip-upgrade' flag.")
-			os.Exit(0)
-		}
-
-		return nil
-	}
+	app.Before = checkNewerVersionOnline
 
 	app.Commands = []*cli.Command{
 		{
