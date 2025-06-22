@@ -3,7 +3,6 @@ package pkg
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -181,7 +180,7 @@ func ParsePackageFile(path string) (Package, error) {
 
 func (d Database) ListAvailablePackages() ([]Package, error) {
 	dbPath := filepath.Join(d.Path, dbPath)
-	files, err := ioutil.ReadDir(dbPath)
+	files, err := os.ReadDir(dbPath)
 	if err != nil {
 		return nil, err
 	}
