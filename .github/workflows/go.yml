@@ -6,9 +6,9 @@ on:
     branches: [main]
 
 env:
-  GO_VERSION: "1.22"
-  RIZIN_VERSION: "v0.8.0"
-  PYTHON_VERSION: "3.10"
+  GO_VERSION: "1.24"
+  RIZIN_VERSION: "v0.8.1"
+  PYTHON_VERSION: "3.13"
 
 jobs:
   build:
@@ -62,13 +62,14 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           echo "D:/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Check out source code
+        uses: actions/checkout@v4
       - name: Set up Golang ${{ env.GO_VERSION }}
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
         id: go
-      - name: Check out source code
-        uses: actions/checkout@v4
       - name: Run unit tests
         run: go test -v ./... -race -coverprofile=coverage.txt -covermode=atomic
       - name: Build the Go binary
