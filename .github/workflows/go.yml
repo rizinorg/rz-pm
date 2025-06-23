@@ -37,43 +37,46 @@ jobs:
             meson_options: -Dportable=true -Db_vscrt=static_from_buildtype
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: ${{ env.PYTHON_VERSION }}
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install meson ninja
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
         if: matrix.os == 'windows-latest'
+      - name: Setup ccache/sccache
+        uses: hendrikmuhs/ccache-action@v1.2
       - name: Install Rizin
         run: |
           git clone https://github.com/rizinorg/rizin
           cd rizin
           git checkout ${{ env.RIZIN_VERSION }}
-          meson --buildtype=release --prefix=${{ matrix.prefix }} ${{ matrix.meson_options }} build
-          meson compile ${{ matrix.os == 'windows-latest' && '-j1' || '' }} -C build
+          meson setup --buildtype=release --prefix=${{ matrix.prefix }} ${{ matrix.meson_options }} build
+          ninja ${{ matrix.os == 'windows-latest' && '-j1' || '' }} -C build
           ${{ matrix.sudo }} meson install -C build
           cd ..
       - name: Add rizin dir to PATH
         if: matrix.os == 'windows-latest'
         run: |
           echo "D:/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-      - name: Set up Golang
+      - name: Set up Golang ${{ env.GO_VERSION }}
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
         id: go
-      - name: Check out code into the Go module directory
+      - name: Check out source code
         uses: actions/checkout@v4
       - name: Run unit tests
         run: go test -v ./... -race -coverprofile=coverage.txt -covermode=atomic
       - name: Build the Go binary
         run: go build -v -o rz-pm .
-      - name: Make sure jsdec is present in the database
+
+      - name: "Test: make sure jsdec is present in the database"
         run: ./rz-pm --debug list | grep -q 'Converts asm to pseudo-C code'
-      - name: Install jsdec
+      - name: "Test: Install jsdec"
         run: ./rz-pm --debug install jsdec
-      - name: Check jsdec
+      - name: "Test: Check jsdec"
         run: ls $(rizin -H RZ_USER_PLUGINS) | grep core_pdd
