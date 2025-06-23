@@ -130,22 +130,22 @@ func (d Database) UpdateDatabase(rizinVersion string) error {
 		})
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open or clone rz-pm-db repository: %w", err)
 	}
 
 	w, err := repo.Worktree()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get worktree: %w", err)
 	}
 	log.Printf("Updating rz-pm-db repository...\n")
 	err = w.Pull(&git.PullOptions{RemoteName: "origin"})
 	if err != git.NoErrAlreadyUpToDate {
-		return err
+		return fmt.Errorf("failed to pull rz-pm-db repository: %w", err)
 	}
 
 	h, err := repo.Head()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get repository head: %w", err)
 	}
 
 	branchName := h.Name().String()
