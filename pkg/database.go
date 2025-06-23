@@ -61,7 +61,7 @@ func getBranchName(s string) plumbing.ReferenceName {
 func remoteBranches(s storer.ReferenceStorer) (storer.ReferenceIter, error) {
 	refs, err := s.IterReferences()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to iterate references: %w", err)
 	}
 
 	return storer.NewReferenceFilteredIter(func(ref *plumbing.Reference) bool {
@@ -116,7 +116,7 @@ func (d Database) switchTag(repo *git.Repository, w *git.Worktree, rizinVersion 
 
 	err = w.Checkout(&git.CheckoutOptions{Branch: localBranchName, Create: create})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to checkout branch %s: %w", localBranchName, err)
 	}
 	return switchBranch, nil
 }
@@ -165,7 +165,7 @@ func (d Database) UpdateDatabase(rizinVersion string) error {
 			log.Printf("Failed to switch rz-pm-db to version %s, default to main branch", rizinVersion)
 			err = w.Checkout(&git.CheckoutOptions{Branch: "refs/heads/master"})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to checkout master branch after failed switch to version %s: %w", rizinVersion, err)
 			}
 		} else {
 			log.Printf("Switched rz-pm-db to %s...\n", tagName)
@@ -207,7 +207,7 @@ func (d Database) ListAvailablePackages() ([]Package, error) {
 	dbPath := filepath.Join(d.Path, dbPath)
 	files, err := os.ReadDir(dbPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read available packages directory: %w", err)
 	}
 
 	packages := []Package{}
@@ -234,7 +234,7 @@ func (d Database) ListAvailablePackages() ([]Package, error) {
 func (d Database) GetPackage(name string) (Package, error) {
 	packages, err := d.ListAvailablePackages()
 	if err != nil {
-		return RizinPackage{}, err
+		return RizinPackage{}, fmt.Errorf("failed to list available packages: %w", err)
 	}
 
 	for _, pkg := range packages {

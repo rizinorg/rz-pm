@@ -88,29 +88,29 @@ func (rp RizinPackage) downloadTar(artifactsPath string) error {
 	client := http.Client{}
 	resp, err := client.Get(rp.PackageSource.URL)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to download package source: %w", err)
 	}
 
 	defer resp.Body.Close()
 	tarballFile, err := os.CreateTemp(artifactsPath, "")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create temporary file for package source: %w", err)
 	}
 	defer os.Remove(tarballFile.Name())
 
 	_, err = io.Copy(tarballFile, resp.Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write package source to temporary file: %w", err)
 	}
 
 	tarballFileOpen, err := os.Open(tarballFile.Name())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open temporary file for package source: %w", err)
 	}
 
 	content, err := io.ReadAll(tarballFileOpen)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read package source from temporary file: %w", err)
 	}
 	fmt.Printf("Verifying downloaded archive...\n")
 	computedHash := sha256.Sum256(content)
@@ -126,7 +126,7 @@ func (rp RizinPackage) downloadTar(artifactsPath string) error {
 	if strings.HasSuffix(rp.PackageSource.URL, ".gz") {
 		fileReader, err = gzip.NewReader(tarballFileOpen)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create gzip reader for package source: %w", err)
 		}
 		defer fileReader.Close()
 	}
@@ -139,7 +139,7 @@ func (rp RizinPackage) downloadTar(artifactsPath string) error {
 			break
 		}
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to read tarball header: %w", err)
 		}
 
 		filename := filepath.Join(artifactsPath, header.Name)
@@ -153,20 +153,20 @@ func (rp RizinPackage) downloadTar(artifactsPath string) error {
 			err = os.MkdirAll(filename, os.FileMode(header.Mode))
 
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create directory %s: %w", filename, err)
 			}
 		case tar.TypeReg:
 			// handle normal file
 			writer, err := os.Create(filename)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create file %s: %w", filename, err)
 			}
 
 			io.Copy(writer, tarballReader)
 
 			err = os.Chmod(filename, os.FileMode(header.Mode))
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to set permissions for file %s: %w", filename, err)
 			}
 
 			writer.Close()
@@ -186,25 +186,25 @@ func (rp RizinPackage) downloadGit(artifactsPath string) error {
 	if fi, err := os.Stat(projectPath); !os.IsNotExist(err) && fi.IsDir() {
 		repo, err := git.PlainOpen(projectPath)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to open git repository at %s: %w", projectPath, err)
 		}
 
 		tree, err := repo.Worktree()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get worktree for git repository at %s: %w", projectPath, err)
 		}
 
 		err = tree.Pull(&git.PullOptions{Progress: nil, RecurseSubmodules: git.DefaultSubmoduleRecursionDepth})
 		if err == nil || err == git.NoErrAlreadyUpToDate {
 			return nil
 		}
-		return err
+		return fmt.Errorf("failed to pull git repository at %s: %w", projectPath, err)
 	} else {
 		_, err = git.PlainClone(projectPath, false, &git.CloneOptions{
 			URL:               rp.PackageSource.URL,
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
-		return err
+		return fmt.Errorf("failed to clone git repository from %s: %w", rp.PackageSource.URL, err)
 	}
 }
 
@@ -214,7 +214,7 @@ func (rp RizinPackage) Download(baseArtifactsPath string) error {
 	artifactsPath := rp.artifactsPath(baseArtifactsPath)
 	err := os.MkdirAll(artifactsPath, os.FileMode(0755))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create artifacts directory %s: %w", artifactsPath, err)
 	}
 
 	if rp.isSupportedArchiveRepo() {
@@ -254,15 +254,16 @@ func (rp RizinPackage) buildMeson(site Site) error {
 	log.Printf("\tdir: %s", srcPath)
 	log.Printf("\targs: %s", strings.Join(args, " "))
 
-
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 
-	cmd = exec.Command("meson", "compile", "-C", "build")
+	cmd = exec.Command("ninja", "-C", "build")
 	cmd.Dir = srcPath
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.Writer()
+
+	log.Printf("Running ninja build...")
 	if err := cmd.Run(); err != nil {
 		return err
 	}
@@ -283,17 +284,25 @@ func (rp RizinPackage) buildCMake(site Site) error {
 	cmd.Dir = srcPath
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.Writer()
+
+	log.Printf("Running cmake:")
+	log.Printf("\tdir: %s", srcPath)
+	log.Printf("\targs: %s", strings.Join(args, " "))
+
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("failed to configure package %s: %w", rp.PackageName, err)
 	}
 
 	cmd = exec.Command("cmake", "--build", "build")
 	cmd.Dir = srcPath
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.Writer()
+
+	log.Printf("Running cmake build...")
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("failed to build package %s: %w", rp.PackageName, err)
 	}
+
 	return nil
 }
 
@@ -312,19 +321,21 @@ func (rp RizinPackage) installMeson(site Site) ([]string, error) {
 	cmd.Stderr = log.Writer()
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to introspect meson build: %w", err)
 	}
+
 	var data map[string]string
 	err = json.Unmarshal([]byte(out), &data)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse meson introspect output: %w", err)
 	}
 
-	var installed_files []string
+	var installedFiles []string
 	for _, v := range data {
-		installed_files = append(installed_files, v)
+		installedFiles = append(installedFiles, v)
 	}
-	return installed_files, nil
+
+	return installedFiles, nil
 }
 
 func (rp RizinPackage) installCMake(site Site) ([]string, error) {
@@ -333,25 +344,28 @@ func (rp RizinPackage) installCMake(site Site) ([]string, error) {
 	cmd.Dir = srcPath
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.Writer()
+
+	log.Printf("Running cmake install...")
 	if err := cmd.Run(); err != nil {
 		return nil, err
 	}
 
 	file, err := os.Open(filepath.Join(srcPath, "build", "install_manifest.txt"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not open install_manifest.txt: %w", err)
 	}
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	var lines []string
+	var installedFiles []string
 	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+		installedFiles = append(installedFiles, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading install_manifest.txt: %w", err)
 	}
-	return lines, nil
+
+	return installedFiles, nil
 }
 
 func (rp RizinPackage) uninstallMeson(site Site) error {

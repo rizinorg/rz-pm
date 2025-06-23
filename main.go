@@ -68,7 +68,7 @@ func listPackages(c *cli.Context, installed bool) error {
 		packages, err = site.ListAvailablePackages()
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to list packages: %w", err)
 	}
 
 	green := color.New(color.Bold, color.FgGreen).SprintFunc()
@@ -257,7 +257,7 @@ func installPackages(c *cli.Context) error {
 
 		err = site.InstallPackage(pkg)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to install package: %w", err)
 		}
 	}
 	return nil
@@ -292,7 +292,7 @@ func uninstallPackages(c *cli.Context) error {
 
 		err = site.UninstallPackage(pkg)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to uninstall package: %w", err)
 		}
 	}
 	return nil
@@ -323,7 +323,7 @@ func cleanPackage(c *cli.Context) error {
 
 	err = site.CleanPackage(pkg)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to clean package: %w", err)
 	}
 	fmt.Printf("Package %s build artifacts have been cleaned.\n", pkg.Name())
 	return nil
