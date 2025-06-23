@@ -124,13 +124,20 @@ func (d Database) switchTag(repo *git.Repository, w *git.Worktree, rizinVersion 
 func (d Database) UpdateDatabase(rizinVersion string) error {
 	repo, err := git.PlainOpen(d.Path)
 	if err == git.ErrRepositoryNotExists {
-		log.Printf("Downloading rz-pm-db repository...\n")
+		log.Println("Downloading rz-pm-db repository...")
 		repo, err = git.PlainClone(d.Path, false, &git.CloneOptions{
 			URL: RZPM_DB_REPO_URL,
 		})
 	}
 	if err != nil {
 		return fmt.Errorf("failed to open or clone rz-pm-db repository: %w", err)
+	}
+
+	// check that the db directory exists
+	dbDirPath := filepath.Join(d.Path, dbPath)
+	info, statErr := os.Stat(dbDirPath)
+	if statErr != nil || !info.IsDir() {
+		return fmt.Errorf("the cloned rz-pm-db repository does not contain a '%s' directory at %s", dbPath, dbDirPath)
 	}
 
 	w, err := repo.Worktree()
