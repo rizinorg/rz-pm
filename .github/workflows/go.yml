@@ -39,7 +39,6 @@ jobs:
             meson_options: -Dportable=true -Db_vscrt=static_from_buildtype
 
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
@@ -56,6 +55,7 @@ jobs:
           key: rizin-build-${{ matrix.os }}-${{ env.RIZIN_VERSION }}
           path: ${{ env.RIZIN_DIR }}
       - name: Build Rizin
+        if: steps.cache-rizin-build.outputs.cache-hit != 'true'
         run: |
           git clone https://github.com/rizinorg/rizin ${{ env.RIZIN_DIR }}
           cd ${{ env.RIZIN_DIR }}
