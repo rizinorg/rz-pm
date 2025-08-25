@@ -44,3 +44,9 @@ source:
   build_arguments:
     - -Djsc_folder=..
 ```
+
+## Note on vendored dependencies
+
+We use the `vendor` directory to store vendored dependencies. This allows us to just git clone the repository and have all the dependencies available.
+
+To update the vendored dependencies, you can use the `make update-deps` command. This will first update the `go.mod` and `go.sum` files, and then copy the dependencies to the `vendor` directory.
