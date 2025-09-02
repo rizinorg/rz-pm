@@ -10,7 +10,7 @@ require (
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/hashicorp/go-version v1.7.0
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v2 v2.27.7
 	gopkg.in/yaml.v2 v2.4.0
 )
