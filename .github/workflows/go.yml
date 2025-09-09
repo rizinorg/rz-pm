@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 env:
-  GO_VERSION: "1.22"
+  GO_VERSION: "1.23"
   RIZIN_VERSION: "v0.8.0"
   PYTHON_VERSION: "3.10"
 
