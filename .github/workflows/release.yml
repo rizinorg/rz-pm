@@ -40,7 +40,7 @@ jobs:
             cc: /tmp/android-ndk/android-ndk-r21e/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang
     steps:
       - name: Set up Go 1.19
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.19'
         id: go
