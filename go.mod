@@ -7,7 +7,7 @@ toolchain go1.23.3
 require (
 	github.com/adrg/xdg v0.5.3
 	github.com/fatih/color v1.18.0
-	github.com/go-git/go-git/v5 v5.16.3
+	github.com/go-git/go-git/v5 v5.16.4
 	github.com/hashicorp/go-version v1.7.0
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/stretchr/testify v1.11.1
