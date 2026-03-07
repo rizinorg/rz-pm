@@ -62,7 +62,7 @@ jobs:
       - name: Rename rz-pm
         run: mv ./rz-pm${{ matrix.goos == 'windows' && '.exe' || '' }} ./rz-pm-${{ matrix.goos }}-${{ matrix.asset_arch }}${{ matrix.goos == 'windows' && '.exe' || '' }}
       - name: Upload rz-pm build
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: rz-pm-${{ matrix.goos }}-${{ matrix.asset_arch }}
           path: ./rz-pm-${{ matrix.goos }}-${{ matrix.asset_arch }}${{ matrix.goos == 'windows' && '.exe' || '' }}
