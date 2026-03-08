@@ -392,14 +392,14 @@ func (rp RizinPackage) Build(site Site) error {
 	if rp.PackageSource.BuildSystem == "meson" {
 		_, err := exec.LookPath("meson")
 		if err != nil {
-			return fmt.Errorf(buildErrorMsg("make sure 'meson' is installed and in PATH"))
+			return fmt.Errorf("%s", buildErrorMsg("make sure 'meson' is installed and in PATH"))
 		}
 
 		_, err = exec.LookPath("pkg-config")
 		if err != nil {
 			_, err = exec.LookPath("cmake")
 			if err != nil {
-				return fmt.Errorf(buildErrorMsg("make sure either 'cmake' or `pkg-config` are installed and in PATH"))
+				return fmt.Errorf("%s", buildErrorMsg("make sure either 'cmake' or `pkg-config` are installed and in PATH"))
 			}
 		}
 
@@ -407,12 +407,12 @@ func (rp RizinPackage) Build(site Site) error {
 	} else if rp.PackageSource.BuildSystem == "cmake" {
 		_, err := exec.LookPath("cmake")
 		if err != nil {
-			return fmt.Errorf(buildErrorMsg("make sure 'cmake' is installed and in PATH"))
+			return fmt.Errorf("%s", buildErrorMsg("make sure 'cmake' is installed and in PATH"))
 		}
 
 		_, err = exec.LookPath("pkg-config")
 		if err != nil {
-			return fmt.Errorf(buildErrorMsg("make sure `pkg-config` is installed and in PATH"))
+			return fmt.Errorf("%s", buildErrorMsg("make sure `pkg-config` is installed and in PATH"))
 		}
 
 		return rp.buildCMake(site)
