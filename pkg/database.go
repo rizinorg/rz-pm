@@ -121,7 +121,8 @@ func (d Database) updateDatabase(rizinVersion string) error {
 	}
 	log.Printf("Updating rz-pm-db repository...\n")
 	err = w.Pull(&git.PullOptions{RemoteName: "origin"})
-	if err != git.NoErrAlreadyUpToDate {
+	//below branch selction logic should also be used for a sucessfull pull, for a non-default branch
+	if err != nil && err != git.NoErrAlreadyUpToDate {
 		return err
 	}
 
@@ -165,15 +166,17 @@ func ParsePackageFile(path string) (Package, error) {
 	if p.PackageName == "" || p.PackageVersion == "" || p.PackageSummary == "" {
 		return RizinPackage{}, fmt.Errorf("wrong file plugin format: name, version, and summary are mandatory")
 	}
-	if p.PackageSource != nil {
-		if p.PackageSource.URL == "" || p.PackageSource.BuildSystem == "" {
-			return RizinPackage{}, fmt.Errorf("wrong file plugin format: Source URL and Build System are mandatory")
-		}
-		if !p.isGitRepo() && p.PackageSource.Hash == "" {
-			return RizinPackage{}, fmt.Errorf("wrong file plugin format: Source Hash is mandatory for non-git plugins")
-		} else if p.isGitRepo() && p.PackageSource.Hash != "" {
-			return RizinPackage{}, fmt.Errorf("wrong file plugin format: Source Hash should not be used for git plugins")
-		}
+	//as every installable package needs a source.
+	if p.PackageSource == nil {
+		return RizinPackage{}, fmt.Errorf("wrong file plugin format: source is mandatory")
+	}
+	if p.PackageSource.URL == "" || p.PackageSource.BuildSystem == "" {
+		return RizinPackage{}, fmt.Errorf("wrong file plugin format: Source URL and Build System are mandatory")
+	}
+	if !p.isGitRepo() && p.PackageSource.Hash == "" {
+		return RizinPackage{}, fmt.Errorf("wrong file plugin format: Source Hash is mandatory for non-git plugins")
+	} else if p.isGitRepo() && p.PackageSource.Hash != "" {
+		return RizinPackage{}, fmt.Errorf("wrong file plugin format: Source Hash should not be used for git plugins")
 	}
 	return p, nil
 }

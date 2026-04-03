@@ -7,11 +7,11 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -28,7 +28,7 @@ func TestDownloadSimplePackage(t *testing.T) {
 		PackageSource: &RizinPackageSource{
 			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.4.0.tar.gz",
 			Hash:           "5afe9a823c1c31ccf641dc1667a092418cd84f5cb9865730580783ca7c44e93d",
-			BuildSystem:    "meson",
+			BuildSystem:    Meson,
 			Directory:      "p",
 			BuildArguments: []string{"-Djsc_folder=.."},
 		},
@@ -54,7 +54,7 @@ func TestWrongHash(t *testing.T) {
 		PackageSource: &RizinPackageSource{
 			URL:            "https://github.com/rizinorg/jsdec/archive/refs/tags/v0.8.0.tar.gz",
 			Hash:           "sha256:2b2587dd117d48b284695416a7349a21c4dd30fbe75cc5890ed74945c9b474aa",
-			BuildSystem:    "meson",
+			BuildSystem:    Meson,
 			Directory:      "p",
 			BuildArguments: []string{"-Djsc_folder=.."},
 		},
@@ -74,6 +74,8 @@ func TestWrongHash(t *testing.T) {
 
 type FakeSite struct {
 	ArtifactsDir string
+	PkgConfigDir string
+	CMakeDir     string
 }
 
 func (s FakeSite) GetInstalledPackage(string) (InstalledPackage, error) {
@@ -87,13 +89,42 @@ func (s FakeSite) GetPackageFromFile(filename string) (Package, error) { return 
 func (s FakeSite) GetBaseDir() string                                  { return "" }
 func (s FakeSite) RizinVersion() string                                { return "0.5.2" }
 func (s FakeSite) GetArtifactsDir() string                             { return s.ArtifactsDir }
-func (s FakeSite) GetPkgConfigDir() string                             { return "pkg-config-dir" }
-func (s FakeSite) GetCMakeDir() string                                 { return "" }
+func (s FakeSite) GetPkgConfigDir() string                             { return s.PkgConfigDir }
+func (s FakeSite) GetCMakeDir() string                                 { return s.CMakeDir }
 func (s FakeSite) InstallPackage(Package) error                        { return nil }
 func (s FakeSite) UninstallPackage(Package) error                      { return nil }
 func (s FakeSite) CleanPackage(Package) error                          { return nil }
 func (s FakeSite) Remove() error                                       { return nil }
 func (s FakeSite) Close() error                                        { return nil }
+
+func newBuildTestSite(t *testing.T, artifactsDir string) FakeSite {
+	t.Helper()
+
+	if _, err := exec.LookPath("meson"); err != nil {
+		t.Skip("meson is required for build/install package tests")
+	}
+	//mirror the real build prerequisites so test failures reflect product behavior
+	if _, err := exec.LookPath("pkg-config"); err != nil {
+		if _, cmakeErr := exec.LookPath("cmake"); cmakeErr != nil {
+			t.Skip("either pkg-config or cmake is required for build/install package tests")
+		}
+	}
+
+	pkgConfigDir, pkgConfigErr := getPkgConfigPath()
+	cmakeDir, cmakeErr := getCMakePath()
+	if pkgConfigErr != nil && cmakeErr != nil {
+		t.Skipf("rizin development files are required for build/install package tests: pkg-config path error: %v, cmake path error: %v", pkgConfigErr, cmakeErr)
+	}
+	if pkgConfigDir == "" && cmakeDir == "" {
+		t.Skip("rizin development files are required for build/install package tests")
+	}
+
+	return FakeSite{
+		ArtifactsDir: artifactsDir,
+		PkgConfigDir: pkgConfigDir,
+		CMakeDir:     cmakeDir,
+	}
+}
 
 // tarGzDir creates a .tar.gz archive at destFile containing the contents of srcDir.
 func tarGzDir(destFile, srcDir string) error {
@@ -212,13 +243,39 @@ func createTestPackage(t *testing.T, ctx context.Context) RizinPackage {
 		PackageSource: &RizinPackageSource{
 			URL:            serveURL,
 			Hash:           hash,
-			BuildSystem:    "meson",
+			BuildSystem:    Meson,
 			Directory:      "",
 			BuildArguments: []string{"-Drizin_plugdir="},
 		},
 	}
 
 	return simplePackage
+}
+
+func createMaliciousTarGz(t *testing.T, parentDir string, version string) string {
+	t.Helper()
+
+	tmpFile, err := os.CreateTemp(parentDir, "rzpm-malicious-*.tar.gz")
+	require.NoError(t, err, "temp tarball should be created")
+
+	gw := gzip.NewWriter(tmpFile)
+	tw := tar.NewWriter(gw)
+
+	payload := []byte("escaped")
+	header := &tar.Header{
+		Name: fmt.Sprintf("../%sX/evil.txt", version),
+		Mode: 0600,
+		Size: int64(len(payload)),
+	}
+	require.NoError(t, tw.WriteHeader(header), "malicious tar header should be written")
+	_, err = tw.Write(payload)
+	require.NoError(t, err, "malicious tar payload should be written")
+
+	require.NoError(t, tw.Close(), "malicious tar should be finalized")
+	require.NoError(t, gw.Close(), "malicious gzip should be finalized")
+	require.NoError(t, tmpFile.Close(), "malicious tarball should be closed")
+
+	return tmpFile.Name()
 }
 
 func TestInstallSimplePackage(t *testing.T) {
@@ -239,7 +296,7 @@ func TestInstallSimplePackage(t *testing.T) {
 	err = p.Download(tmpPath)
 	require.NoError(t, err, "package should be downloaded")
 
-	installedFiles, err := p.Install(FakeSite{ArtifactsDir: tmpPath})
+	installedFiles, err := p.Install(newBuildTestSite(t, tmpPath))
 	require.NoError(t, err, "The plugin should be built and installed without errors")
 
 	files, err := os.ReadDir(pluginsPath)
@@ -294,14 +351,14 @@ func TestUninstallSimplePackage(t *testing.T) {
 	err = p.Download(tmpPath)
 	require.NoError(t, err, "package should be downloaded")
 
-	s := FakeSite{ArtifactsDir: tmpPath}
+	s := newBuildTestSite(t, tmpPath)
 	_, err = p.Install(s)
 	assert.NoError(t, err, "The plugin should be built and installed without errors")
 
 	err = p.Uninstall(s)
 	assert.NoError(t, err, "The plugin should be uninstalled without errors")
 
-	files, err := ioutil.ReadDir(pluginsPath)
+	files, err := os.ReadDir(pluginsPath)
 	require.NoError(t, err, "pluginsPath should be read")
 	require.Len(t, files, 0, "there should be one plugins installed")
 }
@@ -313,7 +370,7 @@ func TestDownloadGitPackage(t *testing.T) {
 		PackageVersion:     "dev",
 		PackageSource: &RizinPackageSource{
 			URL:            "https://github.com/rizinorg/jsdec.git",
-			BuildSystem:    "meson",
+			BuildSystem:    Meson,
 			Directory:      "",
 			BuildArguments: []string{"-Dstandalone=false"},
 		},
@@ -331,4 +388,46 @@ func TestDownloadGitPackage(t *testing.T) {
 	assert.NoError(t, err, "simple-git(jsdec) master branch should have been git cloned")
 	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "jsdec", "c"))
 	assert.NoError(t, err, "simple-git(jsdec)c should be there")
+}
+
+func TestDownloadTarRejectsPathTraversal(t *testing.T) {
+	parentDir, err := os.MkdirTemp(os.TempDir(), "rzpmtest-traversal")
+	require.NoError(t, err, "temp parent path should be created")
+	defer os.RemoveAll(parentDir)
+
+	tarball := createMaliciousTarGz(t, parentDir, "0.0.1")
+	hash := calcFileSha256(t, tarball)
+	server := http.Server{
+		Addr: "127.0.0.1:0",
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, tarball)
+		}),
+	}
+
+	ln, err := net.Listen("tcp", server.Addr)
+	require.NoError(t, err, "malicious test server should listen")
+	defer server.Shutdown(context.Background())
+
+	go server.Serve(ln)
+
+	p := RizinPackage{
+		PackageName:        "simple",
+		PackageDescription: "simple description",
+		PackageVersion:     "0.0.1",
+		PackageSource: &RizinPackageSource{
+			URL:         fmt.Sprintf("http://%s/malicious.tar.gz", ln.Addr().String()),
+			Hash:        hash,
+			BuildSystem: Meson,
+			Directory:   "",
+		},
+	}
+
+	baseArtifactsPath := filepath.Join(parentDir, "artifacts")
+	err = p.Download(baseArtifactsPath)
+	require.ErrorContains(t, err, "outside the base path")
+
+	// The malicious tarball targets a sibling path that used to bypass string-prefix checks.
+	escapedPath := filepath.Join(baseArtifactsPath, "simple", "0.0.1X", "evil.txt")
+	_, err = os.Stat(escapedPath)
+	assert.True(t, os.IsNotExist(err), "path traversal should not create files outside the package directory")
 }

@@ -25,6 +25,7 @@ type BuildSystem string
 
 const (
 	Meson BuildSystem = "meson"
+	CMake BuildSystem = "cmake"
 )
 
 type RizinPackageSource struct {
@@ -72,15 +73,41 @@ func (rp RizinPackage) Summary() string {
 }
 
 func (rp RizinPackage) Source() RizinPackageSource {
+	if rp.PackageSource == nil {
+		return RizinPackageSource{}
+	}
 	return *rp.PackageSource
 }
 
 func (rp RizinPackage) isGitRepo() bool {
-	return rp.PackageSource == nil || strings.HasSuffix(rp.PackageSource.URL, ".git")
+	return rp.PackageSource != nil && strings.HasSuffix(rp.PackageSource.URL, ".git")
 }
 
 func (rp RizinPackage) isSupportedArchiveRepo() bool {
-	return rp.PackageSource == nil || strings.HasSuffix(rp.PackageSource.URL, ".tar.gz") || strings.HasSuffix(rp.PackageSource.URL, ".tar")
+	return rp.PackageSource != nil && (strings.HasSuffix(rp.PackageSource.URL, ".tar.gz") || strings.HasSuffix(rp.PackageSource.URL, ".tar"))
+}
+
+func (rp RizinPackage) validateSource() error {
+	//fail here instead of letting nil source data break later steps
+	if rp.PackageSource == nil {
+		return fmt.Errorf("package %s does not define a source", rp.PackageName)
+	}
+	return nil
+}
+
+func secureJoin(basePath, relativePath string) (string, error) {
+	cleanBase := filepath.Clean(basePath)
+	targetPath := filepath.Clean(filepath.Join(cleanBase, relativePath))
+
+	relPath, err := filepath.Rel(cleanBase, targetPath)
+	if err != nil {
+		return "", err
+	}
+	//reject paths that escape the extraction root, including sibling-prefix traversal cases.
+	if relPath == ".." || strings.HasPrefix(relPath, ".."+string(os.PathSeparator)) || filepath.IsAbs(relPath) {
+		return "", fmt.Errorf("trying to extract a file outside the base path")
+	}
+	return targetPath, nil
 }
 
 func (rp RizinPackage) downloadTar(artifactsPath string) error {
@@ -107,6 +134,7 @@ func (rp RizinPackage) downloadTar(artifactsPath string) error {
 	if err != nil {
 		return err
 	}
+	defer tarballFileOpen.Close()
 
 	content, err := io.ReadAll(tarballFileOpen)
 	if err != nil {
@@ -142,10 +170,9 @@ func (rp RizinPackage) downloadTar(artifactsPath string) error {
 			return err
 		}
 
-		filename := filepath.Join(artifactsPath, header.Name)
-		cleanedFilename := filepath.Clean(filename)
-		if !strings.HasPrefix(cleanedFilename, artifactsPath) {
-			return fmt.Errorf("trying to extract a file outside the base path")
+		filename, err := secureJoin(artifactsPath, header.Name)
+		if err != nil {
+			return err
 		}
 
 		switch header.Typeflag {
@@ -156,20 +183,30 @@ func (rp RizinPackage) downloadTar(artifactsPath string) error {
 				return err
 			}
 		case tar.TypeReg:
-			// handle normal file
+			//create parent directories explicitly so nested archive entries extract reliably.
+			err = os.MkdirAll(filepath.Dir(filename), 0755)
+			if err != nil {
+				return err
+			}
+
 			writer, err := os.Create(filename)
 			if err != nil {
 				return err
 			}
 
-			io.Copy(writer, tarballReader)
+			_, err = io.Copy(writer, tarballReader)
+			closeErr := writer.Close()
+			if err != nil {
+				return err
+			}
+			if closeErr != nil {
+				return closeErr
+			}
 
 			err = os.Chmod(filename, os.FileMode(header.Mode))
 			if err != nil {
 				return err
 			}
-
-			writer.Close()
 		}
 	}
 	fmt.Printf("Source code for %s downloaded and extracted.\n", rp.PackageName)
@@ -210,9 +247,14 @@ func (rp RizinPackage) downloadGit(artifactsPath string) error {
 
 // Download the source code of a package and extract it in the provided path
 func (rp RizinPackage) Download(baseArtifactsPath string) error {
+	err := rp.validateSource()
+	if err != nil {
+		return err
+	}
+
 	log.Printf("Downloading package %s... from '%s'", rp.PackageName, rp.PackageSource.URL)
 	artifactsPath := rp.artifactsPath(baseArtifactsPath)
-	err := os.MkdirAll(artifactsPath, os.FileMode(0755))
+	err = os.MkdirAll(artifactsPath, os.FileMode(0755))
 	if err != nil {
 		return err
 	}
@@ -253,7 +295,6 @@ func (rp RizinPackage) buildMeson(site Site) error {
 	log.Printf("Running meson setup:")
 	log.Printf("\tdir: %s", srcPath)
 	log.Printf("\targs: %s", strings.Join(args, " "))
-
 
 	if err := cmd.Run(); err != nil {
 		return err
@@ -375,6 +416,10 @@ func buildErrorMsg(msg string) string {
 
 // Build a package if a source is provided
 func (rp RizinPackage) Build(site Site) error {
+	if err := rp.validateSource(); err != nil {
+		return err
+	}
+
 	if site.GetPkgConfigDir() == "" && site.GetCMakeDir() == "" {
 		return fmt.Errorf("make sure rizin development files are installed (e.g. librizin-dev, rizin-devel, etc.)")
 	}
@@ -389,7 +434,8 @@ func (rp RizinPackage) Build(site Site) error {
 	}
 
 	fmt.Printf("Building %s...\n", rp.PackageName)
-	if rp.PackageSource.BuildSystem == "meson" {
+	switch rp.PackageSource.BuildSystem {
+	case Meson:
 		_, err := exec.LookPath("meson")
 		if err != nil {
 			return fmt.Errorf("%s", buildErrorMsg("make sure 'meson' is installed and in PATH"))
@@ -404,7 +450,7 @@ func (rp RizinPackage) Build(site Site) error {
 		}
 
 		return rp.buildMeson(site)
-	} else if rp.PackageSource.BuildSystem == "cmake" {
+	case CMake:
 		_, err := exec.LookPath("cmake")
 		if err != nil {
 			return fmt.Errorf("%s", buildErrorMsg("make sure 'cmake' is installed and in PATH"))
@@ -416,7 +462,7 @@ func (rp RizinPackage) Build(site Site) error {
 		}
 
 		return rp.buildCMake(site)
-	} else {
+	default:
 		log.Printf("BuildSystem %s is not supported yet.", rp.PackageSource.BuildSystem)
 		return fmt.Errorf("unsupported build system")
 	}
@@ -424,6 +470,10 @@ func (rp RizinPackage) Build(site Site) error {
 
 // Install a package after building it
 func (rp RizinPackage) Install(site Site) ([]string, error) {
+	if err := rp.validateSource(); err != nil {
+		return []string{}, err
+	}
+
 	err := rp.Build(site)
 	if err != nil {
 		return []string{}, err
@@ -431,11 +481,12 @@ func (rp RizinPackage) Install(site Site) ([]string, error) {
 
 	var installed_files []string
 	fmt.Printf("Installing %s...\n", rp.PackageName)
-	if rp.PackageSource.BuildSystem == "meson" {
+	switch rp.PackageSource.BuildSystem {
+	case Meson:
 		installed_files, err = rp.installMeson(site)
-	} else if rp.PackageSource.BuildSystem == "cmake" {
+	case CMake:
 		installed_files, err = rp.installCMake(site)
-	} else {
+	default:
 		log.Printf("BuildSystem %s is not supported yet.", rp.PackageSource.BuildSystem)
 		err = fmt.Errorf("unsupported build system")
 	}
@@ -447,11 +498,16 @@ func (rp RizinPackage) Install(site Site) ([]string, error) {
 }
 
 func (rp RizinPackage) Uninstall(site Site) error {
+	if err := rp.validateSource(); err != nil {
+		return err
+	}
+
 	fmt.Printf("Uninstalling %s...\n", rp.PackageName)
 	var err error
-	if rp.PackageSource.BuildSystem == "meson" {
+	switch rp.PackageSource.BuildSystem {
+	case Meson:
 		err = rp.uninstallMeson(site)
-	} else {
+	default:
 		log.Printf("BuildSystem %s is not supported yet.", rp.PackageSource.BuildSystem)
 		err = fmt.Errorf("unsupported build system")
 	}
