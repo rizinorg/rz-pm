@@ -141,22 +141,39 @@ version: 0.0.1
 summary: simple description
 `
 
+	f4 := `name: simple
+version: 0.0.1
+summary: simple description
+source:
+  directory: jsdec-0.7.0/
+`
+
 	tmpFile.WriteString(f1)
 
 	_, err = ParsePackageFile(tmpFile.Name())
 	assert.Error(t, err, "missing name should fail parsing")
 
 	tmpFile.Truncate(0)
+	//seek to start before rewriting, so no residual data from previous case stays
+	tmpFile.Seek(0, 0)
 	tmpFile.WriteString(f2)
 
 	_, err = ParsePackageFile(tmpFile.Name())
 	assert.Error(t, err, "missing version should fail parsing")
 
 	tmpFile.Truncate(0)
+	tmpFile.Seek(0, 0)
 	tmpFile.WriteString(f3)
 
 	_, err = ParsePackageFile(tmpFile.Name())
 	assert.Error(t, err, "missing source should fail parsing")
+
+	tmpFile.Truncate(0)
+	tmpFile.Seek(0, 0)
+	tmpFile.WriteString(f4)
+
+	_, err = ParsePackageFile(tmpFile.Name())
+	assert.Error(t, err, "source with missing url and build_system should fail parsing")
 }
 
 type FakePackage struct {

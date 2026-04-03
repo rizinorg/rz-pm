@@ -23,6 +23,8 @@ const (
 	flagUpdateDB    = "update-db"
 )
 
+var initSite = pkg.InitSite
+
 func setDebug(value bool) {
 	if value {
 		log.SetOutput(os.Stderr)
@@ -37,7 +39,7 @@ func listPackages(c *cli.Context, installed bool) error {
 		return fmt.Errorf("wrong usage of list command")
 	}
 
-	site, err := pkg.InitSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
+	site, err := initSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
 	if err != nil {
 		return err
 	}
@@ -86,7 +88,7 @@ func infoPackage(c *cli.Context) error {
 		return fmt.Errorf("wrong usage of info command")
 	}
 
-	site, err := pkg.InitSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
+	site, err := initSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
 	if err != nil {
 		return err
 	}
@@ -206,16 +208,19 @@ func installPackages(c *cli.Context) error {
 		cli.ShowCommandHelp(c, "install")
 		return fmt.Errorf("wrong usage of install command")
 	}
+
+	site, err := initSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
+	if err != nil {
+		return err
+	}
+	//multi-package installs shouldn't trigger site lock, so reused same instance
+	defer site.Close()
+
 	for _, packageName := range c.Args().Slice() {
 		if packageName == "" {
 			cli.ShowCommandHelp(c, "install")
 			return fmt.Errorf("wrong usage of install command")
 		}
-		site, err := pkg.InitSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
-		if err != nil {
-			return err
-		}
-		defer site.Close()
 
 		var pkg pkg.Package
 		if c.Bool("file") {
@@ -244,17 +249,19 @@ func uninstallPackages(c *cli.Context) error {
 		cli.ShowCommandHelp(c, "uninstall")
 		return fmt.Errorf("wrong usage of uninstall command")
 	}
+
+	site, err := initSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
+	if err != nil {
+		return err
+	}
+	//same as in install above
+	defer site.Close()
+
 	for _, packageName := range c.Args().Slice() {
 		if packageName == "" {
 			cli.ShowCommandHelp(c, "uninstall")
 			return fmt.Errorf("wrong usage of uninstall command")
 		}
-
-		site, err := pkg.InitSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
-		if err != nil {
-			return err
-		}
-		defer site.Close()
 
 		var pkg pkg.Package
 		if c.Bool("file") {
@@ -281,7 +288,7 @@ func cleanPackage(c *cli.Context) error {
 		return fmt.Errorf("wrong usage of clean command")
 	}
 
-	site, err := pkg.InitSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
+	site, err := initSite(pkg.SiteDir(), c.Bool(flagUpdateDB))
 	if err != nil {
 		return err
 	}
