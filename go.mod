@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/adrg/xdg v0.5.3
 	github.com/fatih/color v1.19.0
-	github.com/go-git/go-git/v5 v5.17.1
+	github.com/go-git/go-git/v5 v5.17.2
 	github.com/hashicorp/go-version v1.8.0
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/stretchr/testify v1.11.1
