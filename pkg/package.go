@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/adrg/xdg"
 	"github.com/go-git/go-git/v5"
@@ -27,6 +28,8 @@ const (
 	Meson BuildSystem = "meson"
 	CMake BuildSystem = "cmake"
 )
+
+const gitProgressDotInterval = 2 * time.Second
 
 type RizinPackageSource struct {
 	URL            string
@@ -108,6 +111,33 @@ func secureJoin(basePath, relativePath string) (string, error) {
 		return "", fmt.Errorf("trying to extract a file outside the base path")
 	}
 	return targetPath, nil
+}
+
+func runWithDotProgress(message string, interval time.Duration, fn func() error) error {
+	fmt.Print(message)
+
+	done := make(chan struct{})
+	stopped := make(chan struct{})
+	go func() {
+		defer close(stopped)
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				fmt.Print(".")
+			}
+		}
+	}()
+
+	err := fn()
+	close(done)
+	<-stopped
+	fmt.Println()
+	return err
 }
 
 func (rp RizinPackage) downloadTar(artifactsPath string) error {
@@ -231,17 +261,43 @@ func (rp RizinPackage) downloadGit(artifactsPath string) error {
 			return err
 		}
 
-		err = tree.Pull(&git.PullOptions{Progress: nil, RecurseSubmodules: git.DefaultSubmoduleRecursionDepth})
-		if err == nil || err == git.NoErrAlreadyUpToDate {
+		err = runWithDotProgress(
+			fmt.Sprintf("Updating %s source repository...", rp.PackageName),
+			gitProgressDotInterval,
+			func() error {
+				return tree.Pull(&git.PullOptions{
+					Progress:          nil,
+					RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+				})
+			},
+		)
+		if err == nil {
+			fmt.Printf("Source repository for %s updated.\n", rp.PackageName)
+			return nil
+		}
+		if err == git.NoErrAlreadyUpToDate {
+			fmt.Printf("Source repository for %s is already up to date.\n", rp.PackageName)
 			return nil
 		}
 		return err
 	} else {
-		_, err = git.PlainClone(projectPath, false, &git.CloneOptions{
-			URL:               rp.PackageSource.URL,
-			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-		})
-		return err
+		err = runWithDotProgress(
+			fmt.Sprintf("Cloning %s source repository...", rp.PackageName),
+			gitProgressDotInterval,
+			func() error {
+				_, err := git.PlainClone(projectPath, false, &git.CloneOptions{
+					URL:               rp.PackageSource.URL,
+					Progress:          nil,
+					RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+				})
+				return err
+			},
+		)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Source repository for %s downloaded.\n", rp.PackageName)
+		return nil
 	}
 }
 
