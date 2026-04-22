@@ -358,6 +358,23 @@ func TestGitProjectNameFromURL(t *testing.T) {
 	assert.Equal(t, "source", gitProjectNameFromURL("/tmp/rzpmtest/source.git"))
 }
 
+func TestDownloadTarPackagePrintsProgressSteps(t *testing.T) {
+	p := createTestPackage(t, context.Background())
+
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest-artifacts")
+	require.NoError(t, err, "temp path should be created")
+	defer os.RemoveAll(tmpPath)
+
+	output := captureStdout(t, func() {
+		err = p.Download(tmpPath)
+	})
+	require.NoError(t, err, "package should be downloaded")
+	assert.Contains(t, output, "Downloading simple source archive...")
+	assert.Contains(t, output, "Verifying downloaded archive...")
+	assert.Contains(t, output, "Extracting simple code...")
+	assert.Contains(t, output, "Source code for simple downloaded and extracted.")
+}
+
 func TestInstallSimplePackage(t *testing.T) {
 	log.SetOutput(os.Stderr)
 	p := createTestPackage(t, context.Background())
