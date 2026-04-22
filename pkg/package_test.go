@@ -352,6 +352,12 @@ func TestRunWithDotProgressAppendsDots(t *testing.T) {
 	assert.True(t, strings.HasSuffix(output, "\n"), "dot progress should end with a newline")
 }
 
+func TestGitProjectNameFromURL(t *testing.T) {
+	assert.Equal(t, "jsdec", gitProjectNameFromURL("https://github.com/rizinorg/jsdec.git"))
+	assert.Equal(t, "source", gitProjectNameFromURL(`C:\tmp\rzpmtest\source.git`))
+	assert.Equal(t, "source", gitProjectNameFromURL("/tmp/rzpmtest/source.git"))
+}
+
 func TestInstallSimplePackage(t *testing.T) {
 	log.SetOutput(os.Stderr)
 	p := createTestPackage(t, context.Background())

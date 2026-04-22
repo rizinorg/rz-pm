@@ -113,6 +113,15 @@ func secureJoin(basePath, relativePath string) (string, error) {
 	return targetPath, nil
 }
 
+func gitProjectNameFromURL(url string) string {
+	trimmedURL := strings.TrimSuffix(url, ".git")
+	lastSeparator := strings.LastIndexAny(trimmedURL, `/\`)
+	if lastSeparator == -1 {
+		return trimmedURL
+	}
+	return trimmedURL[lastSeparator+1:]
+}
+
 func runWithDotProgress(message string, interval time.Duration, fn func() error) error {
 	fmt.Print(message)
 
@@ -245,12 +254,10 @@ func (rp RizinPackage) downloadTar(artifactsPath string) error {
 }
 
 func (rp RizinPackage) downloadGit(artifactsPath string) error {
-	gitProjectNamePieces := strings.Split(rp.PackageSource.URL, "/")
-	gitProjectName := gitProjectNamePieces[len(gitProjectNamePieces)-1]
-	gitProjectName = strings.TrimSuffix(gitProjectName, ".git")
-
+	gitProjectName := gitProjectNameFromURL(rp.PackageSource.URL)
 	projectPath := filepath.Join(artifactsPath, gitProjectName)
-	if fi, err := os.Stat(projectPath); !os.IsNotExist(err) && fi.IsDir() {
+	fi, err := os.Stat(projectPath)
+	if err == nil && fi.IsDir() {
 		repo, err := git.PlainOpen(projectPath)
 		if err != nil {
 			return err
@@ -299,6 +306,27 @@ func (rp RizinPackage) downloadGit(artifactsPath string) error {
 		fmt.Printf("Source repository for %s downloaded.\n", rp.PackageName)
 		return nil
 	}
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	err = runWithDotProgress(
+		fmt.Sprintf("Cloning %s source repository...", rp.PackageName),
+		gitProgressDotInterval,
+		func() error {
+			_, err := git.PlainClone(projectPath, false, &git.CloneOptions{
+				URL:               rp.PackageSource.URL,
+				Progress:          nil,
+				RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+			})
+			return err
+		},
+	)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Source repository for %s downloaded.\n", rp.PackageName)
+	return nil
 }
 
 // Download the source code of a package and extract it in the provided path
