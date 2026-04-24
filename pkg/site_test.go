@@ -3,8 +3,11 @@ package pkg
 import (
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -65,6 +68,50 @@ func TestLockedSite(t *testing.T) {
 	site2, err = InitSite(tmpPath, true)
 	assert.Nil(t, err, "site should be initialized after the first instance is closed")
 	site2.Close()
+}
+
+func TestSiteLockReleasedOnInterrupt(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("interrupt delivery differs on windows")
+	}
+
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest")
+	require.NoError(t, err, "temp path should be created")
+	defer os.RemoveAll(tmpPath)
+
+	cmd := exec.Command(os.Args[0], "-test.run=TestSiteLockReleasedOnInterruptHelper")
+	cmd.Env = append(os.Environ(),
+		"GO_WANT_SITELOCK_INTERRUPT_HELPER=1",
+		"GO_WANT_SITELOCK_INTERRUPT_HELPER_PATH="+tmpPath,
+	)
+	require.NoError(t, cmd.Start())
+
+	lockPath := filepath.Join(tmpPath, "site.lock")
+	require.Eventually(t, func() bool {
+		_, err := os.Stat(lockPath)
+		return err == nil
+	}, 5*time.Second, 100*time.Millisecond, "lock file should be created before interrupting helper")
+
+	require.NoError(t, cmd.Process.Signal(os.Interrupt))
+
+	err = cmd.Wait()
+	var exitErr *exec.ExitError
+	require.ErrorAs(t, err, &exitErr, "helper should exit after the interrupt")
+
+	_, err = os.Stat(lockPath)
+	assert.True(t, os.IsNotExist(err), "lock file should be removed after interrupt")
+}
+
+func TestSiteLockReleasedOnInterruptHelper(t *testing.T) {
+	if os.Getenv("GO_WANT_SITELOCK_INTERRUPT_HELPER") != "1" {
+		return
+	}
+
+	site, err := InitSite(os.Getenv("GO_WANT_SITELOCK_INTERRUPT_HELPER_PATH"), true)
+	require.NoError(t, err, "helper site should initialize")
+	defer site.Close()
+
+	select {}
 }
 
 func TestListPackages(t *testing.T) {
