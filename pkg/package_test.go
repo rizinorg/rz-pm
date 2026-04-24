@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
@@ -14,8 +15,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
+	"time"
 
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -278,6 +283,98 @@ func createMaliciousTarGz(t *testing.T, parentDir string, version string) string
 	return tmpFile.Name()
 }
 
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+
+	oldStdout := os.Stdout
+	reader, writer, err := os.Pipe()
+	require.NoError(t, err, "stdout pipe should be created")
+	os.Stdout = writer
+
+	outputCh := make(chan string, 1)
+	go func() {
+		var buf bytes.Buffer
+		_, _ = io.Copy(&buf, reader)
+		outputCh <- buf.String()
+	}()
+
+	defer func() {
+		os.Stdout = oldStdout
+	}()
+
+	fn()
+
+	require.NoError(t, writer.Close(), "stdout writer should close")
+	return <-outputCh
+}
+
+func createLocalGitRepo(t *testing.T) string {
+	t.Helper()
+
+	repoRoot, err := os.MkdirTemp(os.TempDir(), "rzpmtest-git-source")
+	require.NoError(t, err, "temp git source path should be created")
+
+	repoPath := filepath.Join(repoRoot, "source.git")
+	repo, err := git.PlainInit(repoPath, false)
+	require.NoError(t, err, "git repository should be initialized")
+
+	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "README.md"), []byte("rz-pm test repo\n"), 0644), "test git repo file should be written")
+
+	worktree, err := repo.Worktree()
+	require.NoError(t, err, "git worktree should be opened")
+
+	_, err = worktree.Add("README.md")
+	require.NoError(t, err, "test git repo file should be staged")
+
+	_, err = worktree.Commit("initial commit", &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "rz-pm test",
+			Email: "test@example.com",
+			When:  time.Now(),
+		},
+	})
+	require.NoError(t, err, "test git repo should be committed")
+
+	return repoPath
+}
+
+func TestRunWithDotProgressAppendsDots(t *testing.T) {
+	output := captureStdout(t, func() {
+		err := runWithDotProgress("Working", 10*time.Millisecond, func() error {
+			time.Sleep(25 * time.Millisecond)
+			return nil
+		})
+		require.NoError(t, err, "progress helper should return operation errors")
+	})
+
+	assert.Contains(t, output, "Working")
+	assert.Contains(t, output, "Working.")
+	assert.True(t, strings.HasSuffix(output, "\n"), "dot progress should end with a newline")
+}
+
+func TestGitProjectNameFromURL(t *testing.T) {
+	assert.Equal(t, "jsdec", gitProjectNameFromURL("https://github.com/rizinorg/jsdec.git"))
+	assert.Equal(t, "source", gitProjectNameFromURL(`C:\tmp\rzpmtest\source.git`))
+	assert.Equal(t, "source", gitProjectNameFromURL("/tmp/rzpmtest/source.git"))
+}
+
+func TestDownloadTarPackagePrintsProgressSteps(t *testing.T) {
+	p := createTestPackage(t, context.Background())
+
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest-artifacts")
+	require.NoError(t, err, "temp path should be created")
+	defer os.RemoveAll(tmpPath)
+
+	output := captureStdout(t, func() {
+		err = p.Download(tmpPath)
+	})
+	require.NoError(t, err, "package should be downloaded")
+	assert.Contains(t, output, "Downloading simple source archive...")
+	assert.Contains(t, output, "Verifying downloaded archive...")
+	assert.Contains(t, output, "Extracting simple code...")
+	assert.Contains(t, output, "Source code for simple downloaded and extracted.")
+}
+
 func TestInstallSimplePackage(t *testing.T) {
 	log.SetOutput(os.Stderr)
 	p := createTestPackage(t, context.Background())
@@ -364,12 +461,15 @@ func TestUninstallSimplePackage(t *testing.T) {
 }
 
 func TestDownloadGitPackage(t *testing.T) {
+	repoPath := createLocalGitRepo(t)
+	defer os.RemoveAll(filepath.Dir(repoPath))
+
 	p := RizinPackage{
 		PackageName:        "simple-git",
 		PackageDescription: "simple-git description",
 		PackageVersion:     "dev",
 		PackageSource: &RizinPackageSource{
-			URL:            "https://github.com/rizinorg/jsdec.git",
+			URL:            repoPath,
 			BuildSystem:    Meson,
 			Directory:      "",
 			BuildArguments: []string{"-Dstandalone=false"},
@@ -380,14 +480,55 @@ func TestDownloadGitPackage(t *testing.T) {
 	require.NoError(t, err, "temp path should be created")
 	// defer os.RemoveAll(tmpPath)
 
-	err = p.Download(tmpPath)
+	output := captureStdout(t, func() {
+		err = p.Download(tmpPath)
+	})
 	assert.NoError(t, err, "simple package should be downloaded")
-	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "jsdec"))
+	assert.Contains(t, output, "Cloning simple-git source repository...")
+	assert.NotContains(t, output, "Enumerating objects")
+	assert.Contains(t, output, "Source repository for simple-git downloaded.")
+	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "source"))
 	assert.NoError(t, err, "simple-git(jsdec) dir should be there")
-	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "jsdec", ".git"))
+	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "source", ".git"))
 	assert.NoError(t, err, "simple-git(jsdec) master branch should have been git cloned")
-	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "jsdec", "c"))
-	assert.NoError(t, err, "simple-git(jsdec)c should be there")
+	_, err = os.Stat(filepath.Join(tmpPath, "simple-git", "dev", "source", "README.md"))
+	assert.NoError(t, err, "simple-git(source) checkout should include repository files")
+}
+
+func TestDownloadGitPackagePrintsUpdateStatus(t *testing.T) {
+	repoPath := createLocalGitRepo(t)
+	defer os.RemoveAll(filepath.Dir(repoPath))
+
+	p := RizinPackage{
+		PackageName:        "simple-git",
+		PackageDescription: "simple-git description",
+		PackageVersion:     "dev",
+		PackageSource: &RizinPackageSource{
+			URL:            repoPath,
+			BuildSystem:    Meson,
+			Directory:      "",
+			BuildArguments: []string{"-Dstandalone=false"},
+		},
+	}
+
+	tmpPath, err := os.MkdirTemp(os.TempDir(), "rzpmtest")
+	require.NoError(t, err, "temp path should be created")
+	defer os.RemoveAll(tmpPath)
+
+	err = p.Download(tmpPath)
+	require.NoError(t, err, "package should be downloaded the first time")
+
+	output := captureStdout(t, func() {
+		err = p.Download(tmpPath)
+	})
+	require.NoError(t, err, "package should be refreshed without errors")
+	assert.Contains(t, output, "Updating simple-git source repository...")
+	assert.NotContains(t, output, "Enumerating objects")
+	assert.True(t,
+		strings.Contains(output, "Source repository for simple-git updated.") ||
+			strings.Contains(output, "Source repository for simple-git is already up to date."),
+		"git downloads should tell the user how the refresh finished",
+	)
 }
 
 func TestDownloadTarRejectsPathTraversal(t *testing.T) {
