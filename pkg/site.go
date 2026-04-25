@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -68,9 +69,11 @@ type InstalledPackage struct {
 
 type SiteLock struct {
 	sync.Locker
-	path   string
-	locked bool
-	mu     sync.Mutex
+	path             string
+	locked           bool
+	mu               sync.Mutex
+	interruptSignals chan os.Signal
+	interruptCleanup chan struct{}
 }
 
 type RizinSite struct {
@@ -479,6 +482,7 @@ func (sl *SiteLock) Lock() error {
 	}
 
 	sl.locked = true
+	sl.startInterruptCleanup()
 	return nil
 }
 
@@ -488,6 +492,13 @@ func (sl *SiteLock) Unlock() error {
 
 	if !sl.locked {
 		return fmt.Errorf("site lock is not active")
+	}
+
+	if sl.interruptSignals != nil {
+		signal.Stop(sl.interruptSignals)
+		close(sl.interruptCleanup)
+		sl.interruptSignals = nil
+		sl.interruptCleanup = nil
 	}
 
 	err := os.Remove(sl.path)
@@ -501,4 +512,23 @@ func (sl *SiteLock) Unlock() error {
 
 	sl.locked = false
 	return nil
+}
+
+func (sl *SiteLock) startInterruptCleanup() {
+	signals := make(chan os.Signal, 1)
+	cleanupDone := make(chan struct{})
+
+	sl.interruptSignals = signals
+	sl.interruptCleanup = cleanupDone
+	signal.Notify(signals, os.Interrupt)
+
+	go func() {
+		select {
+		case <-cleanupDone:
+			return
+		case <-signals:
+			_ = sl.Unlock()
+			os.Exit(130)
+		}
+	}()
 }
