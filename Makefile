@@ -8,7 +8,7 @@ integration-tests:
 tests:
 	go test ./...
 
-rz-pm: $(wildcard internal/**/*.go pkg/**/*.go main.go)
+rz-pm: $(shell find pkg internal -type f -name '*.go' 2>/dev/null) main.go go.mod go.sum
 	go build
 
 clean:
