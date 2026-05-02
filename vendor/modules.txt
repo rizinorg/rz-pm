@@ -136,7 +136,7 @@ github.com/go-git/go-git/v5/utils/trace
 # github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8
 ## explicit; go 1.20
 github.com/golang/groupcache/lru
-# github.com/hashicorp/go-version v1.8.0
+# github.com/hashicorp/go-version v1.9.0
 ## explicit
 github.com/hashicorp/go-version
 # github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
