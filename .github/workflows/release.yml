@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        goos: [windows, darwin, freebsd, openbsd, netbsd, linux, android]
+        goos: [windows, darwin, freebsd, openbsd, netbsd, linux]
         goarch: [amd64, arm64]
         include:
           - goarch: amd64
@@ -30,8 +30,15 @@ jobs:
             goarch: s390x
             asset_arch: s390x
           - goos: android
+            goarch: amd64
+            asset_arch: x86_64
+            cgo_enabled: 1
+            cc: /tmp/android-ndk/android-ndk-r21e/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang
+          - goos: android
             goarch: arm64
             asset_arch: arm64
+            cgo_enabled: 1
+            cc: /tmp/android-ndk/android-ndk-r21e/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang
           - goos: android
             goarch: arm
             asset_arch: arm
