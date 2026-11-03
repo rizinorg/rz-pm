@@ -194,11 +194,19 @@ summary: simple description
 source:
   directory: jsdec-0.7.0/
 `
+	f5 := `name: simple
+version: 0.0.1
+source:
+  url: https://github.com/rizinorg/jsdec/archive/refs/tags/v0.7.0.tar.gz
+  hash: sha256:2b2587dd117d48b284695416a7349a21c4dd30fbe75cc5890ed74945c9b474ea
+  build_system: meson
+`
 
 	tmpFile.WriteString(f1)
 
 	_, err = ParsePackageFile(tmpFile.Name())
-	assert.Error(t, err, "missing name should fail parsing")
+	require.Error(t, err, "missing name should fail parsing")
+	assert.Contains(t, err.Error(), "name is mandatory")
 
 	tmpFile.Truncate(0)
 	//seek to start before rewriting, so no residual data from previous case stays
@@ -206,21 +214,30 @@ source:
 	tmpFile.WriteString(f2)
 
 	_, err = ParsePackageFile(tmpFile.Name())
-	assert.Error(t, err, "missing version should fail parsing")
+	require.Error(t, err, "missing version should fail parsing")
+	assert.Contains(t, err.Error(), "version is mandatory")
 
 	tmpFile.Truncate(0)
 	tmpFile.Seek(0, 0)
 	tmpFile.WriteString(f3)
 
 	_, err = ParsePackageFile(tmpFile.Name())
-	assert.Error(t, err, "missing source should fail parsing")
-
+	require.Error(t, err, "missing source should fail parsing")
+	assert.Contains(t, err.Error(), "source is mandatory")
 	tmpFile.Truncate(0)
 	tmpFile.Seek(0, 0)
 	tmpFile.WriteString(f4)
 
 	_, err = ParsePackageFile(tmpFile.Name())
 	assert.Error(t, err, "source with missing url and build_system should fail parsing")
+
+	tmpFile.Truncate(0)
+	tmpFile.Seek(0, 0)
+	tmpFile.WriteString(f5)
+
+	_, err = ParsePackageFile(tmpFile.Name())
+	require.Error(t, err, "missing summary should fail parsing")
+	assert.Contains(t, err.Error(), "summary is mandatory")
 }
 
 type FakePackage struct {
