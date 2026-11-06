@@ -163,8 +163,16 @@ func ParsePackageFile(path string) (Package, error) {
 		return RizinPackage{}, err
 	}
 
-	if p.PackageName == "" || p.PackageVersion == "" || p.PackageSummary == "" {
-		return RizinPackage{}, fmt.Errorf("wrong file plugin format: name, version, and summary are mandatory")
+	if p.PackageName == "" {
+		return RizinPackage{}, fmt.Errorf("wrong file plugin format: name is mandatory")
+	}
+
+	if p.PackageVersion == "" {
+		return RizinPackage{}, fmt.Errorf("wrong file plugin format: version is mandatory")
+	}
+	if p.PackageSummary == "" {
+		return RizinPackage{}, fmt.Errorf("wrong file plugin format: summary is mandatory")
+
 	}
 	//as every installable package needs a source.
 	if p.PackageSource == nil {
